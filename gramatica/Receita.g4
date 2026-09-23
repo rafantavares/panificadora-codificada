@@ -1,4 +1,8 @@
-lexer grammar Receita;
+grammar Receita;
+
+// Unica regra de parser: espaço reservado para a E3. Existe so para o
+// antlr4-parse poder listar tokens (antlr4-parse Receita.g4 programa -tokens).
+programa : .*? EOF ;
 
 // ---- LEXER: MAIUSCULAS ----
 

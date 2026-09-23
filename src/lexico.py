@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from antlr4 import FileStream, Token
 from antlr4.error.ErrorListener import ErrorListener
 
-from gerado.Receita import Receita
+from gerado.ReceitaLexer import ReceitaLexer
 
 
 class ErroLexico(ErrorListener):
@@ -27,7 +27,7 @@ def main():
         return 2
 
     caminho = sys.argv[1]
-    lexer = Receita(FileStream(caminho, encoding="utf-8"))
+    lexer = ReceitaLexer(FileStream(caminho, encoding="utf-8"))
     erros = ErroLexico()
     lexer.removeErrorListeners()
     lexer.addErrorListener(erros)
