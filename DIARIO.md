@@ -19,3 +19,15 @@ Números: `NUMERO` exige dígito depois do ponto, então `500.` vira `500` e um
 Texto sem fechar: a regra `TEXTO` não casa sem a aspa final, então a `"`
 sobra como caractere não reconhecido; o `lexico.py` traduz isso em
 "texto sem fechar".
+
+## 23/09 (tarde)
+Rodamos `antlr4-parse Receita.g4 programa -tokens` e falhou: com
+`lexer grammar` o antlr4-parse não aceita a gramática (precisa de uma regra
+de parser). Trocamos para `grammar Receita;` com uma única regra provisória,
+`programa : .*? EOF ;`, que aceita qualquer sequência de tokens e será
+substituída na E3. Efeito colateral: o ANTLR passou a gerar `ReceitaLexer.py`
+(antes era `Receita.py`), então o import em `lexico.py` mudou.
+
+Também renomeamos os exemplos `quadrado.rc` e `espiral.rc` (herdados do
+exemplo de desenho do enunciado) para `bolo_cenoura.rc` e `pao_forma.rc`,
+que dizem o que realmente contêm.

@@ -38,3 +38,9 @@ python tests/test_exemplos.py
 ```
 
 Roda o léxico nos exemplos válidos (devem passar) e em `exemplos/invalidos/` (devem falhar apontando o erro).
+
+## Testando só a gramática (sem gerar código)
+
+```sh
+cd gramatica && antlr4-parse Receita.g4 programa -tokens ../exemplos/ola.rc
+```
