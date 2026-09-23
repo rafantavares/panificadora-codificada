@@ -1,0 +1,16 @@
+receita "Bolo de cenoura";
+porcoes 8;
+
+ingrediente cenoura 3 un;
+ingrediente farinha 2.5 xicara;
+ingrediente acucar 1/2 xicara;
+ingrediente fermento 1 colher;
+
+passo 1: # preparo da massa
+  bata cenoura, acucar;
+  adicione farinha;
+passo 2:
+  unte forma;
+  cozinhe em forma por 45 min a 180 graus;
+passo 3:
+  sirva "com cobertura de chocolate";

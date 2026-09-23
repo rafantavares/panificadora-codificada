@@ -1,0 +1,4 @@
+receita "Teste";
+ingrediente farinha 500 g;
+passo 1:
+  misture farinha @ agua;
