@@ -31,3 +31,12 @@ substituída na E3. Efeito colateral: o ANTLR passou a gerar `ReceitaLexer.py`
 Também renomeamos os exemplos `quadrado.rc` e `espiral.rc` (herdados do
 exemplo de desenho do enunciado) para `bolo_cenoura.rc` e `pao_forma.rc`,
 que dizem o que realmente contêm.
+
+## 23/09 (fim do dia)
+Revisão de portabilidade: o Git no Windows converte fim de linha e um
+`gerar.sh` com CRLF quebra no Linux/Mac. Adicionamos `.gitattributes`
+forçando LF nos `.sh`. Fixamos as versões do ANTLR em `requirements.txt`.
+
+Criamos dois inválidos novos: um com erro no meio de um passo e outro com
+três erros no mesmo arquivo. O segundo confirmou que o analisador não para no
+primeiro erro, ele segue e lista todos (texto sem fechar, `2.` e `?`).
