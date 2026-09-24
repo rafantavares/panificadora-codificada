@@ -20,7 +20,7 @@ Especificação completa: [docs/especificacao.md](docs/especificacao.md) · Diá
 Requer Python 3. Versões usadas: **ANTLR 4.13.2** (antlr4-tools 0.2.2, runtime `antlr4-python3-runtime` 4.13.2), Java 17.
 
 ```sh
-pip install antlr4-tools antlr4-python3-runtime==4.13.2
+pip install -r requirements.txt
 sh gerar.sh                                  # gera gerado/ (não versionado)
 python src/lexico.py exemplos/ola.rc         # lista os tokens
 ```
