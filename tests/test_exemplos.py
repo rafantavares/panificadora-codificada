@@ -19,7 +19,8 @@ for arq in sorted(glob.glob(os.path.join(RAIZ, "exemplos", "*.rc"))):
     falhas += not ok
 
 esperado = {"caractere_invalido": "caractere invalido", "texto_sem_fechar": "texto sem fechar",
-            "numero_malformado": "numero malformado"}
+            "numero_malformado": "numero malformado",
+            "erro_no_meio_do_passo": "caractere invalido", "varios_erros": "texto sem fechar"}
 for arq in sorted(glob.glob(os.path.join(RAIZ, "exemplos", "invalidos", "*.rc"))):
     r = rodar(arq)
     nome = os.path.basename(arq)[:-3]

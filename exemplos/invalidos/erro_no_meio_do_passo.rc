@@ -1,0 +1,9 @@
+receita "Pao";
+ingrediente farinha 500 g;
+
+passo 1:
+  misture farinha;
+  asse por 40 min a 180 graus $;
+
+passo 2:
+  sirva;
