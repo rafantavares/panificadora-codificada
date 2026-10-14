@@ -1,0 +1,5 @@
+receita "Comando solto";
+porcoes 4;
+misture farinha, agua;
+passo 1:
+  sirva;

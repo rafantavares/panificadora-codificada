@@ -1,0 +1,5 @@
+receita "Passo sem dois pontos";
+porcoes 2;
+ingrediente agua 200 ml;
+passo 1
+  misture agua;

@@ -1,0 +1,5 @@
+receita "Ingrediente sem unidade";
+porcoes 4;
+ingrediente farinha 500;
+passo 1:
+  sirva;

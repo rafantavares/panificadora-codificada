@@ -1,0 +1,5 @@
+receita "Expressao com erro";
+porcoes 4;
+total = 1000 + * 50;
+passo 1:
+  sirva;

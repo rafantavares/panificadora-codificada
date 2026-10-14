@@ -1,0 +1,11 @@
+# Receita minima
+receita "Pao simples";
+porcoes 4;
+
+ingrediente farinha 500 g;
+ingrediente agua 300 ml;
+
+passo 1:
+  misture farinha, agua;
+passo 2:
+  asse por 40 min a 180 graus;

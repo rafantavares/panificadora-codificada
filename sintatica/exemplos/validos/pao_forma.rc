@@ -1,0 +1,25 @@
+# Pao de forma, receita completa
+receita "Pao de forma";
+porcoes 12;
+
+ingrediente farinha 1 kg;
+ingrediente agua 600 ml;
+ingrediente sal 1 pitada;
+ingrediente fermento 10 g;
+total = 1000 + 600 * 2;   # quantidade base
+
+passo1:
+  misture farinha, agua, sal;
+  adicione fermento;
+
+passo 2:
+  amasse por 10 min;
+  descanse por 1 h;
+
+passo 3:
+  modele "formato de pao de forma";
+  descanse ate 45 min;
+
+passo 4:
+  asse por (30 + 10) min a 200 graus;
+  sirva;

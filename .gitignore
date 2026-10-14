@@ -1,4 +1,12 @@
-gerado/
+# Codigo gerado pelo ANTLR
+**/gerado/
 *.tokens
 *.interp
-__pycache__/
+
+# Python cache
+**/__pycache__/
+*.pyc
+
+# Ambientes virtuais
+.venv/
+venv/

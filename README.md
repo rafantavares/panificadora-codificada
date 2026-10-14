@@ -1,46 +1,42 @@
 # Panificadora Codificada
 
-Linguagem para escrever receitas: ingredientes com medidas e uma sequência de passos (`passo 1`, `passo 2`...), tudo entre um `passo N` e o próximo pertence àquele passo.
+Linguagem de domínio específico (DSL) para descrever receitas culinárias estruturadas com ingredientes, unidades e passos de preparo.
 
-```
-receita "Pao simples";
-porcoes 4;
-ingrediente farinha 500 g;
-ingrediente agua 300 ml;
-passo 1:
-  misture farinha, agua;
-passo 2:
-  asse por 40 min a 180 graus;
-```
+Projeto desenvolvido para a disciplina de **Linguagens Formais e Computabilidade / Compiladores**.
 
-Especificação completa: [docs/especificacao.md](docs/especificacao.md) · Diário: [DIARIO.md](DIARIO.md)
+---
 
-## Instalar e rodar
+## 📁 Estrutura do Repositório
 
-Requer Python 3. Versões usadas: **ANTLR 4.13.2** (antlr4-tools 0.2.2, runtime `antlr4-python3-runtime` 4.13.2), Java 17.
+O projeto está organizado em três diretórios principais:
 
+1. **[`lexica/`](lexica/):** 
+   - **Entrega 2 (E2):** Especificação da linguagem e Analisador Léxico.
+   - Gramática léxica no ANTLR 4 (`Receita.g4`), analisador léxico (`src/lexico.py`), especificação completa (`docs/especificacao.md`), diário de decisões (`DIARIO.md`) e bateria de testes léxicos (`tests/test_exemplos.py`).
+
+2. **[`sintatica/`](sintatica/):** 
+   - **Entrega 3 (E3):** Analisador Sintático e Construção da Árvore Sintática (*Parse Tree*).
+   - Gramática sintática livre de contexto (`gramatica/Receita.g4`), analisador sintático com árvore (`src/sintatico.py`), exemplos sintáticos válidos e inválidos, e suíte de testes automatizados (`tests/test_sintatico.py`).
+
+3. **[`conteudo/`](conteudo/):** 
+   - Slides das aulas e guia oficial de uso do ANTLR 4 da disciplina.
+
+---
+
+## 🚀 Como Rodar os Projetos
+
+Requer **Python 3** e **ANTLR 4.13.2** (`pip install -r requirements.txt`).
+
+### Testando a Etapa Léxica (E2):
 ```sh
-pip install -r requirements.txt
-sh gerar.sh                                  # gera gerado/ (não versionado)
-python src/lexico.py exemplos/ola.rc         # lista os tokens
-```
-
-Erros léxicos são reportados com linha e coluna (saída de erro, código de saída 1).
-
-## Fase atual
-
-**E2 — especificação e analisador léxico.** Parser (E3) e semântica (E4) ainda não iniciados.
-
-## Testes
-
-```sh
+cd lexica
 python tests/test_exemplos.py
+python src/lexico.py exemplos/ola.rc
 ```
 
-Roda o léxico nos exemplos válidos (devem passar) e em `exemplos/invalidos/` (devem falhar apontando o erro).
-
-## Testando só a gramática (sem gerar código)
-
+### Testando a Etapa Sintática (E3):
 ```sh
-cd gramatica && antlr4-parse Receita.g4 programa -tokens ../exemplos/ola.rc
+cd sintatica
+python tests/test_sintatico.py
+python src/sintatico.py exemplos/validos/ola.rc --tree
 ```

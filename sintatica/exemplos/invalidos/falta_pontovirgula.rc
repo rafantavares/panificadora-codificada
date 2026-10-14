@@ -1,0 +1,5 @@
+receita "Bolo sem ponto e virgula";
+porcoes 4;
+ingrediente farinha 500 g
+passo 1:
+  misture farinha;
