@@ -37,3 +37,16 @@ cd sintatica
 python tests/test_sintatico.py
 python src/sintatico.py exemplos/validos/ola.rc --tree
 ```
+
+---
+
+## 🎨 Painel Visual & Simulador Interativo
+
+O projeto conta com um **dashboard visual interativo** para apresentações e demonstrações do compilador em tempo real:
+
+* **Como abrir:** Dê dois cliques em [`visual/index.html`](visual/index.html) ou execute `Start-Process "visual/index.html"` no terminal.
+* **Recursos interativos:**
+  - **Simulador com Animação:** Assista ao analisador léxico extraindo os tokens linha a linha e ao analisador sintático construindo a **Árvore Sintática (SVG)** ao vivo.
+  - **Detecção Visual de Erros:** Simula erros léxicos e sintáticos, apontando com destaque a linha, coluna e motivo exato.
+  - **Abas Completas:** Inclui a especificação formatada, comparativo das gramáticas ANTLR4 (.g4) e o diário de bordo.
+

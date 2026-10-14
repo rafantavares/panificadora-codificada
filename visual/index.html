@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panificadora Codificada — Compilador Visual (LFC)</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #151d30;
+      --card-border: #24324f;
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --accent-glow: rgba(245, 158, 11, 0.25);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --kw: #c084fc;
+      --ident: #38bdf8;
+      --num: #34d399;
+      --str: #fbbf24;
+      --action: #f97316;
+      --unit: #facc15;
+      --punct: #cbd5e1;
+      --error: #ef4444;
+      --success: #10b981;
+      --font-code: "Fira Code", "JetBrains Mono", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(180deg, #182238 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      font-size: 2rem;
+      background: var(--card-bg);
+      padding: 0.4rem;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badges {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .badge-green {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+
+    /* NAV TABS */
+    nav {
+      background: #111827;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0 2rem;
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.9rem 1.2rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* MAIN CONTENT */
+    main {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      max-width: 1700px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* SIMULATOR LAYOUT */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 380px 340px 1fr;
+      gap: 1.25rem;
+      height: calc(100vh - 190px);
+      min-height: 600px;
+    }
+
+    @media (max-width: 1200px) {
+      .sim-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    .sim-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-header {
+      background: #182238;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-body {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+    }
+
+    /* CODE EDITOR */
+    .editor-wrapper {
+      position: relative;
+      height: 100%;
+      display: flex;
+      background: #0d1322;
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .line-numbers {
+      width: 40px;
+      padding: 0.8rem 0;
+      background: #090e1a;
+      border-right: 1px solid var(--card-border);
+      color: #475569;
+      text-align: right;
+      user-select: none;
+      font-size: 0.8rem;
+    }
+
+    .line-number {
+      padding-right: 8px;
+      height: 1.5em;
+    }
+
+    .line-number.highlight-line {
+      background: rgba(245, 158, 11, 0.25);
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .code-input {
+      flex: 1;
+      background: transparent;
+      color: #f8fafc;
+      border: none;
+      padding: 0.8rem;
+      resize: none;
+      outline: none;
+      white-space: pre;
+      overflow-wrap: normal;
+      overflow-x: auto;
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    /* CONTROLS BAR */
+    .controls-bar {
+      padding: 0.75rem 1rem;
+      background: #182238;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: #253350;
+      color: #fff;
+      border: 1px solid #3b4d75;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: #32446a;
+      border-color: #4a6194;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent-hover);
+      color: #111827;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      background: #fbbf24;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--error);
+      color: #fca5a5;
+    }
+
+    select.preset-select {
+      background: #0d1322;
+      color: #f8fafc;
+      border: 1px solid var(--card-border);
+      padding: 0.45rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    /* TOKENS FEED */
+    .token-stream {
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .token-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0d1322;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.45rem 0.65rem;
+      font-family: var(--font-code);
+      font-size: 0.82rem;
+      animation: slideIn 0.25s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-15px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .token-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .token-text {
+      color: #fff;
+      font-weight: 500;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .token-line {
+      color: #64748b;
+      font-size: 0.75rem;
+    }
+
+    /* Token types coloring */
+    .tok-RECEITA, .tok-PORCOES, .tok-INGREDIENTE, .tok-PASSO { background: rgba(192, 132, 252, 0.2); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.4); }
+    .tok-ACAO { background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.4); }
+    .tok-PREPOSICAO { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
+    .tok-UNIDADE, .tok-TEMPO, .tok-TEMPERATURA { background: rgba(250, 204, 21, 0.2); color: #fde047; border: 1px solid rgba(250, 204, 21, 0.4); }
+    .tok-IDENT { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .tok-NUMERO { background: rgba(52, 211, 153, 0.2); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4); }
+    .tok-TEXTO { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+    .tok-PONTOVIRG, .tok-DOISPONTOS, .tok-VIRGULA, .tok-ABREPAR, .tok-FECHAPAR, .tok-MAIS, .tok-MENOS, .tok-VEZES, .tok-DIV, .tok-IGUAL {
+      background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    /* PARSE TREE CANVAS / SVG */
+    .tree-container {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background: #090e1a;
+      position: relative;
+    }
+
+    svg.parse-tree {
+      display: block;
+      min-width: 100%;
+      min-height: 100%;
+    }
+
+    .node-rect {
+      rx: 6px;
+      ry: 6px;
+      stroke-width: 1.5;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .node-rect:hover {
+      filter: drop-shadow(0 0 8px var(--accent));
+    }
+
+    .node-rule {
+      fill: #1e293b;
+      stroke: #38bdf8;
+    }
+
+    .node-token {
+      fill: #151d30;
+      stroke: #f59e0b;
+    }
+
+    .node-text {
+      font-family: var(--font-code);
+      font-size: 11px;
+      fill: #f8fafc;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      font-weight: 600;
+    }
+
+    .tree-edge {
+      stroke: #334155;
+      stroke-width: 1.8;
+      fill: none;
+    }
+
+    /* STATUS BANNER */
+    .status-banner {
+      padding: 0.6rem 1rem;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #0d1322;
+    }
+
+    .status-success {
+      background: rgba(16, 185, 129, 0.15);
+      border-top-color: var(--success);
+      color: #34d399;
+      font-weight: 600;
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.15);
+      border-top-color: var(--error);
+      color: #fca5a5;
+      font-weight: 600;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.9; }
+      to { opacity: 1; }
+    }
+
+    /* DOCUMENTATION TAB */
+    .doc-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 2.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    .doc-container h1 { font-size: 2rem; color: #fff; margin-bottom: 0.5rem; }
+    .doc-container h2 { font-size: 1.4rem; color: var(--accent); margin: 2rem 0 0.75rem 0; border-bottom: 1px solid var(--card-border); padding-bottom: 0.4rem; }
+    .doc-container h3 { font-size: 1.1rem; color: #38bdf8; margin: 1.5rem 0 0.5rem 0; }
+    .doc-container p { color: #cbd5e1; margin-bottom: 1rem; }
+    .doc-container code { background: #090e1a; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: var(--font-code); color: #fbbf24; font-size: 0.9em; }
+    .doc-container pre { background: #090e1a; padding: 1.25rem; border-radius: 8px; border: 1px solid var(--card-border); overflow-x: auto; margin-bottom: 1.5rem; }
+    .doc-container pre code { padding: 0; background: none; color: #e2e8f0; }
+
+    table.spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0;
+    }
+
+    table.spec-table th, table.spec-table td {
+      border: 1px solid var(--card-border);
+      padding: 0.65rem 1rem;
+      text-align: left;
+    }
+
+    table.spec-table th {
+      background: #182238;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    table.spec-table tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .alert-box {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.5rem 0;
+    }
+
+    /* GRAMMAR VIEWER */
+    .grammar-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .grammar-grid { grid-template-columns: 1fr; }
+    }
+
+    /* EXAMPLES GRID */
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .example-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .example-card.card-valid { border-left: 4px solid var(--success); }
+    .example-card.card-invalid { border-left: 4px solid var(--error); }
+
+    .example-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .example-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #fff;
+    }
+
+    .example-code {
+      background: #090e1a;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-family: var(--font-code);
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      max-height: 160px;
+      overflow-y: auto;
+      white-space: pre;
+    }
+
+    /* TIMELINE */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--card-border);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -2rem;
+      top: 5px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--bg);
+    }
+
+    .timeline-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .timeline-date {
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🥖</div>
+      <div>
+        <div class="brand-title">Panificadora Codificada</div>
+        <div class="brand-subtitle">DSL de Receitas Culinárias · Compiladores</div>
+      </div>
+    </div>
+
+    <div class="badges">
+      <div class="badge badge-green">✓ E2: Léxico OK</div>
+      <div class="badge badge-green">✓ E3: Sintático & Árvore OK</div>
+      <div class="badge">ANTLR 4.13.2</div>
+      <div class="badge">Python 3</div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav>
+    <button class="tab-btn active" onclick="switchTab('simulador')">⚡ Simulador & Animação</button>
+    <button class="tab-btn" onclick="switchTab('especificacao')">📜 Especificação (docs)</button>
+    <button class="tab-btn" onclick="switchTab('gramatica')">📐 Gramática ANTLR4 (.g4)</button>
+    <button class="tab-btn" onclick="switchTab('exemplos')">🧪 Galeria de Testes</button>
+    <button class="tab-btn" onclick="switchTab('diario')">📝 Diário de Bordo</button>
+  </nav>
+
+  <!-- MAIN AREA -->
+  <main>
+
+    <!-- TAB 1: SIMULADOR E ANIMAÇÃO -->
+    <div id="tab-simulador" class="tab-panel active">
+      <div class="sim-grid">
+
+        <!-- COL 1: CÓDIGO FONTE -->
+        <div class="sim-card">
+          <div class="card-header">
+            <div class="card-title">📝 Código Fonte (.rc)</div>
+            <span id="line-count" class="badge">0 linhas</span>
+          </div>
+
+          <div style="padding: 0.6rem 0.8rem; background: #111827; border-bottom: 1px solid var(--card-border);">
+            <select id="preset-selector" class="preset-select" onchange="loadPreset(this.value)">
+              <optgroup label="✅ Exemplos Válidos">
+                <option value="ola">🍞 Pão Simples (ola.rc)</option>
+                <option value="cenoura">🥕 Bolo de Cenoura (bolo_cenoura.rc)</option>
+                <option value="forma">🥖 Pão de Forma com Expressões (pao_forma.rc)</option>
+              </optgroup>
+              <optgroup label="❌ Erros Léxicos (E2)">
+                <option value="err_lex_char">⚠️ Caractere Inválido (@)</option>
+                <option value="err_lex_str">⚠️ Texto sem fechar ("aspas)</option>
+                <option value="err_lex_num">⚠️ Número malformado (500.)</option>
+              </optgroup>
+              <optgroup label="❌ Erros Sintáticos (E3)">
+                <option value="err_sin_pontovirg">⚠️ Falta ponto-e-vírgula (;)</option>
+                <option value="err_sin_passo">⚠️ Passo sem dois-pontos (passo 1)</option>
+                <option value="err_sin_paren">⚠️ Parênteses desbalanceados</option>
+                <option value="err_sin_fora">⚠️ Comando fora de passo</option>
+                <option value="err_sin_unidade">⚠️ Ingrediente sem unidade</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="card-body">
+            <div class="editor-wrapper">
+              <div id="line-numbers" class="line-numbers"></div>
+              <textarea id="code-editor" class="code-input" spellcheck="false" oninput="updateLineNumbers()"></textarea>
+            </div>
+          </div>
+
+          <div class="controls-bar">
+            <button id="btn-play" class="btn btn-primary" onclick="startAnimation()">▶ Animar</button>
+            <button id="btn-instant" class="btn" onclick="runInstant()">⚡ Instantâneo</button>
+            <button id="btn-reset" class="btn btn-danger" onclick="resetAnimation()">⏮ Reset</button>
+            
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: #94a3b8;">
+              <span>Velocidade:</span>
+              <select id="speed-select" class="preset-select" style="width: auto; padding: 0.2rem 0.4rem;">
+                <option value="600">0.5x</option>
+                <option value="300" selected>1x</option>
+                <option value="120">2x</option>
+                <option value="40">5x</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- COL 2: ESTEIRA DE TOKENS (LÉXICO) -->
+        <div class="sim-card">
+          <div class="card-header">
+            <div class="card-title">🔍 Esteira Léxica (Tokens)</div>
+            <span id="token-count" class="badge">0 tokens</span>
+          </div>
+          <div class="card-body" id="token-stream-container">
+            <div id="token-stream" class="token-stream">
+              <div style="color: #64748b; font-size: 0.85rem; text-align: center; margin-top: 3rem;">
+                Clique em <strong>▶ Animar</strong> para ver o analisador léxico processar os tokens em tempo real.
+              </div>
+            </div>
+          </div>
+          <div id="lexical-status" class="status-banner">
+            <span>Aguardando execução...</span>
+          </div>
+        </div>
+
+        <!-- COL 3: ÁRVORE SINTÁTICA (SINTÁTICO) -->
+        <div class="sim-card">
+          <div class="card-header">
+            <div class="card-title">🌳 Árvore Sintática (Parse Tree)</div>
+            <div style="display: flex; gap: 0.35rem;">
+              <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('svg')">Visual SVG</button>
+              <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('text')">Texto Indentado</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="tree-svg-container" class="tree-container">
+              <svg id="parse-tree-svg" class="parse-tree"></svg>
+            </div>
+            <div id="tree-text-container" class="tree-container" style="display: none; padding: 1rem; font-family: var(--font-code); font-size: 0.82rem; color: #38bdf8; white-space: pre;">
+            </div>
+          </div>
+          <div id="syntactic-status" class="status-banner">
+            <span>Aguardando análise sintática...</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: ESPECIFICAÇÃO -->
+    <div id="tab-especificacao" class="tab-panel">
+      <div class="doc-container">
+        <h1>Especificação · Panificadora Codificada</h1>
+        <p style="color: var(--accent); font-weight: 600;">Documento oficial da Parte A (docs/especificacao.md) atendendo às 7 perguntas da disciplina de LFC.</p>
+
+        <h2>1. Para que serve</h2>
+        <p>A linguagem descreve receitas culinárias de forma estruturada: ingredientes com quantidade e unidade, e uma sequência de passos numerados. O objetivo é permitir que um programa leia a receita, separe os passos e valide medidas, tempos e temperaturas.</p>
+
+        <h2>2. Programa de exemplo completo</h2>
+        <pre><code># Receita minima                              (1) comentário, descartado
+receita "Pao simples";                        (2) nome da receita
+porcoes 4;                                    (3) rendimento
+
+ingrediente farinha 500 g;                    (4) nome, quantidade, unidade
+ingrediente agua 300 ml;                      (5) idem
+
+passo 1:                                      (6) abre o passo 1 (vale até o próximo "passo N")
+  misture farinha, agua;                      (7) ação sobre ingredientes separados por vírgula
+passo 2:                                      (8) fecha o passo 1 e abre o passo 2
+  asse por 40 min a 180 graus;                (9) ação + tempo + temperatura</code></pre>
+
+        <h2>3. Tipos de dado</h2>
+        <table class="spec-table">
+          <thead>
+            <tr><th>Tipo</th><th>Exemplos</th><th>Token(s)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Número (inteiro ou real)</td><td><code>500</code>, <code>2.5</code></td><td><code>NUMERO</code></td></tr>
+            <tr><td>Texto</td><td><code>"Pao simples"</code></td><td><code>TEXTO</code></td></tr>
+            <tr><td>Nome (ingrediente/variável)</td><td><code>farinha</code>, <code>agua_morna</code></td><td><code>IDENT</code></td></tr>
+            <tr><td>Quantidade</td><td><code>500 g</code>, <code>1 colher</code></td><td><code>NUMERO UNIDADE</code></td></tr>
+            <tr><td>Tempo</td><td><code>40 min</code>, <code>1 h</code></td><td><code>NUMERO TEMPO</code></td></tr>
+            <tr><td>Temperatura</td><td><code>180 graus</code></td><td><code>NUMERO TEMPERATURA</code></td></tr>
+          </tbody>
+        </table>
+        <p><strong>Unidades:</strong> <code>g</code>, <code>kg</code>, <code>ml</code>, <code>l</code>, <code>xicara</code>, <code>colher</code>, <code>pitada</code>, <code>un</code>. <strong>Tempos:</strong> <code>seg</code>, <code>min</code>, <code>h</code>.</p>
+
+        <h2>4. Comandos</h2>
+        <ul>
+          <li><code>receita "nome";</code> — nomeia a receita.</li>
+          <li><code>porcoes N;</code> — rendimento.</li>
+          <li><code>ingrediente NOME QTD UNIDADE;</code> — declara um ingrediente.</li>
+          <li><code>passo N:</code> — inicia o passo N. Tudo até o próximo <code>passo M</code> pertence a ele.</li>
+          <li><strong>Ações dentro de um passo:</strong> <code>misture</code>, <code>adicione</code>, <code>bata</code>, <code>amasse</code>, <code>descanse</code>, <code>asse</code>, <code>cozinhe</code>, <code>unte</code>, <code>modele</code>, <code>sirva</code>. Podem levar ingredientes separados por vírgula, textos e preposições (<code>em por a ate com</code>) seguidas de tempo/temperatura.</li>
+          <li><code>NOME = expressão;</code> — atribuição de valor numérico (ex.: <code>total = 1000 + 600 * 2;</code>).</li>
+        </ul>
+
+        <h2>5. Operadores e Precedência</h2>
+        <p>Do maior para o menor (ordem de precedência no compilador):</p>
+        <ol style="margin-left: 1.5rem; color: #cbd5e1; margin-bottom: 1rem;">
+          <li><code>( )</code> — agrupamento</li>
+          <li><code>*</code>, <code>/</code> — multiplicação e divisão (esquerda para a direita)</li>
+          <li><code>+</code>, <code>-</code> — soma e subtração (esquerda para a direita)</li>
+          <li><code>=</code> — atribuição</li>
+        </ol>
+
+        <h2>6. Comentários</h2>
+        <p>Começam com <code>#</code> e vão até o fim da linha. São descartados (<code>-> skip</code>) pelo analisador. (O padrão <code>//</code> foi deliberadamente descartado porque a barra <code>/</code> já é usada para divisão em frações como <code>1/2 xicara</code>).</p>
+
+        <h2>7. Três coisas que a linguagem deliberadamente não faz</h2>
+        <div class="alert-box">
+          <ol style="margin-left: 1rem;">
+            <li><strong>Não tem laços nem condicionais:</strong> Uma receita culinária é uma sequência linear e determinística; expressões humanas como "repita até dourar" são descritivas, não lógica executável.</li>
+            <li><strong>Não converte unidades automaticamente:</strong> A conversão de <code>g</code> para <code>xicara</code> depende da densidade de cada ingrediente (200g de farinha é diferente de 200g de manteiga).</li>
+            <li><strong>Não tem tipos definidos pelo usuário nem funções:</strong> Apenas os tipos da seção 3 existem; receitas não chamam outras receitas como sub-rotinas.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: GRAMÁTICA ANTLR4 -->
+    <div id="tab-gramatica" class="tab-panel">
+      <div style="max-width: 1200px; margin: 0 auto;">
+        <h2 style="margin-bottom: 0.5rem; color: #fff;">Gramáticas ANTLR 4 (.g4)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Comparativo entre a gramática da <strong>E2 (apenas léxico)</strong> e da <strong>E3 (sintático completo com regras livres de contexto)</strong>.</p>
+
+        <div class="grammar-grid">
+          <div class="sim-card">
+            <div class="card-header">
+              <div class="card-title">🌳 E3: sintatica/gramatica/Receita.g4</div>
+              <span class="badge badge-green">Parser + Lexer</span>
+            </div>
+            <div class="card-body" style="padding: 1rem; background: #090e1a;">
+              <pre><code style="color: #cbd5e1; font-family: var(--font-code); font-size: 0.8rem;">grammar Receita;
+
+// ==========================================
+// PARSER (E3): REGRAS EM MINÚSCULAS
+// ==========================================
+programa
+    : declaracao_receita? declaracao_porcoes? declaracao_global* bloco_passo* EOF
+    ;
+
+declaracao_receita
+    : RECEITA TEXTO PONTOVIRG
+    ;
+
+declaracao_porcoes
+    : PORCOES NUMERO PONTOVIRG
+    ;
+
+declaracao_global
+    : declaracao_ingrediente
+    | atribuicao
+    ;
+
+declaracao_ingrediente
+    : INGREDIENTE IDENT expr UNIDADE PONTOVIRG
+    ;
+
+atribuicao
+    : IDENT IGUAL expr PONTOVIRG
+    ;
+
+bloco_passo
+    : PASSO DOISPONTOS comando_passo*
+    ;
+
+comando_passo
+    : comando_acao
+    | atribuicao
+    ;
+
+comando_acao
+    : ACAO lista_argumentos? modificador* PONTOVIRG
+    ;
+
+lista_argumentos
+    : argumento (VIRGULA argumento)*
+    ;
+
+argumento
+    : IDENT | TEXTO
+    ;
+
+modificador
+    : PREPOSICAO complemento
+    ;
+
+complemento
+    : expr (TEMPO | TEMPERATURA)?
+    | IDENT | TEXTO
+    ;
+
+// Precedência de operadores no ANTLR:
+expr
+    : ABREPAR expr FECHAPAR
+    | expr (VEZES | DIV) expr
+    | expr (MAIS | MENOS) expr
+    | NUMERO
+    | IDENT
+    ;
+
+// ==========================================
+// LEXER (E2): REGRAS EM MAIÚSCULAS
+// ==========================================
+PASSO       : 'passo' [ \t]* [0-9]+ ;
+RECEITA     : 'receita' ;
+PORCOES     : 'porcoes' ;
+INGREDIENTE : 'ingrediente' ;
+ACAO        : 'misture' | 'adicione' | 'bata' | 'amasse' | 'descanse'
+            | 'asse' | 'cozinhe' | 'unte' | 'modele' | 'sirva' ;
+PREPOSICAO  : 'em' | 'por' | 'a' | 'ate' | 'com' ;
+UNIDADE     : 'g' | 'kg' | 'ml' | 'l' | 'xicara' | 'colher' | 'pitada' | 'un' ;
+TEMPO       : 'seg' | 'min' | 'h' ;
+TEMPERATURA : 'graus' ;
+NUMERO      : [0-9]+ ('.' [0-9]+)? ;
+TEXTO       : '"' ~["\r\n]* '"' ;
+IDENT       : [a-zA-Z_][a-zA-Z_0-9]* ;
+MAIS        : '+' ;  MENOS : '-' ;  VEZES : '*' ;  DIV : '/' ;
+IGUAL       : '=' ;  ABREPAR : '(' ;  FECHAPAR : ')' ;
+VIRGULA     : ',' ;  DOISPONTOS : ':' ;  PONTOVIRG : ';' ;
+COMENT      : '#' ~[\r\n]* -> skip ;
+ESPACO      : [ \t\r\n]+ -> skip ;</code></pre>
+            </div>
+          </div>
+
+          <div class="sim-card">
+            <div class="card-header">
+              <div class="card-title">🔍 E2: lexica/gramatica/Receita.g4</div>
+              <span class="badge">Lexer-only + Stub</span>
+            </div>
+            <div class="card-body" style="padding: 1rem; background: #090e1a;">
+              <pre><code style="color: #cbd5e1; font-family: var(--font-code); font-size: 0.8rem;">grammar Receita;
+
+// Regra provisória de parser na E2
+// (permite rodar antlr4-parse para testar tokens)
+programa : .*? EOF ;
+
+// ---- LEXER: MAIUSCULAS ----
+PASSO       : 'passo' [ \t]* [0-9]+ ;
+RECEITA     : 'receita' ;
+PORCOES     : 'porcoes' ;
+INGREDIENTE : 'ingrediente' ;
+ACAO        : 'misture' | 'adicione' | 'bata' | 'amasse' | 'descanse'
+            | 'asse' | 'cozinhe' | 'unte' | 'modele' | 'sirva' ;
+PREPOSICAO  : 'em' | 'por' | 'a' | 'ate' | 'com' ;
+UNIDADE     : 'g' | 'kg' | 'ml' | 'l' | 'xicara' | 'colher' | 'pitada' | 'un' ;
+TEMPO       : 'seg' | 'min' | 'h' ;
+TEMPERATURA : 'graus' ;
+NUMERO      : [0-9]+ ('.' [0-9]+)? ;
+TEXTO       : '"' ~["\r\n]* '"' ;
+IDENT       : [a-zA-Z_][a-zA-Z_0-9]* ;
+MAIS        : '+' ;
+MENOS       : '-' ;
+VEZES       : '*' ;
+DIV         : '/' ;
+IGUAL       : '=' ;
+ABREPAR     : '(' ;
+FECHAPAR    : ')' ;
+VIRGULA     : ',' ;
+DOISPONTOS  : ':' ;
+PONTOVIRG   : ';' ;
+COMENT      : '#' ~[\r\n]* -> skip ;
+ESPACO      : [ \t\r\n]+ -> skip ;</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: EXEMPLOS E TESTES -->
+    <div id="tab-exemplos" class="tab-panel">
+      <div style="max-width: 1200px; margin: 0 auto;">
+        <h2 style="margin-bottom: 0.5rem; color: #fff;">Galeria de Exemplos e Testes Automatizados</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Clique em <strong>"Carregar no Simulador"</strong> para ver qualquer caso sendo compilado e animado ao vivo.</p>
+
+        <h3 style="color: var(--success); margin: 1.5rem 0 1rem 0;">✅ Exemplos Válidos (Devem compilar 100%)</h3>
+        <div class="examples-grid">
+          <div class="example-card card-valid">
+            <div class="example-header">
+              <span class="example-title">🍞 ola.rc</span>
+              <span class="badge badge-green">Válido</span>
+            </div>
+            <div class="example-code">receita "Pao simples";
+porcoes 4;
+ingrediente farinha 500 g;
+ingrediente agua 300 ml;
+passo 1:
+  misture farinha, agua;
+passo 2:
+  asse por 40 min a 180 graus;</div>
+            <button class="btn btn-primary" onclick="loadPresetAndSimulate('ola')">▶ Carregar no Simulador</button>
+          </div>
+
+          <div class="example-card card-valid">
+            <div class="example-header">
+              <span class="example-title">🥕 bolo_cenoura.rc</span>
+              <span class="badge badge-green">Válido</span>
+            </div>
+            <div class="example-code">receita "Bolo de cenoura";
+porcoes 8;
+ingrediente cenoura 3 un;
+ingrediente farinha 2.5 xicara;
+ingrediente acucar 1/2 xicara;
+ingrediente fermento 1 colher;
+passo 1:
+  bata cenoura, acucar;
+  adicione farinha;
+passo 2:
+  unte forma;
+  cozinhe em forma por 45 min a 180 graus;
+passo 3:
+  sirva "com cobertura de chocolate";</div>
+            <button class="btn btn-primary" onclick="loadPresetAndSimulate('cenoura')">▶ Carregar no Simulador</button>
+          </div>
+
+          <div class="example-card card-valid">
+            <div class="example-header">
+              <span class="example-title">🥖 pao_forma.rc</span>
+              <span class="badge badge-green">Válido</span>
+            </div>
+            <div class="example-code">receita "Pao de forma";
+porcoes 12;
+ingrediente farinha 1 kg;
+ingrediente agua 600 ml;
+ingrediente sal 1 pitada;
+ingrediente fermento 10 g;
+total = 1000 + 600 * 2;
+passo1:
+  misture farinha, agua, sal;
+  adicione fermento;
+passo 2:
+  amasse por 10 min;
+  descanse por 1 h;
+passo 3:
+  modele "formato de pao de forma";
+  descanse ate 45 min;
+passo 4:
+  asse por (30 + 10) min a 200 graus;
+  sirva;</div>
+            <button class="btn btn-primary" onclick="loadPresetAndSimulate('forma')">▶ Carregar no Simulador</button>
+          </div>
+        </div>
+
+        <h3 style="color: var(--error); margin: 2rem 0 1rem 0;">❌ Exemplos Inválidos (Devem ser barrados com linha e coluna)</h3>
+        <div class="examples-grid">
+          <div class="example-card card-invalid">
+            <div class="example-header">
+              <span class="example-title">⚠️ falta_pontovirgula.rc</span>
+              <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Erro Sintático</span>
+            </div>
+            <div class="example-code">ingrediente farinha 500 g
+passo 1:</div>
+            <p style="font-size: 0.8rem; color: #94a3b8;">Falta de <code>;</code> ao término da instrução do ingrediente.</p>
+            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_sin_pontovirg')">▶ Testar no Simulador</button>
+          </div>
+
+          <div class="example-card card-invalid">
+            <div class="example-header">
+              <span class="example-title">⚠️ caractere_invalido.rc</span>
+              <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Erro Léxico</span>
+            </div>
+            <div class="example-code">passo 1:
+  misture farinha @ agua;</div>
+            <p style="font-size: 0.8rem; color: #94a3b8;">Símbolo <code>@</code> desconhecido pelo léxico da linguagem.</p>
+            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_lex_char')">▶ Testar no Simulador</button>
+          </div>
+
+          <div class="example-card card-invalid">
+            <div class="example-header">
+              <span class="example-title">⚠️ parenteses_desbalanceados.rc</span>
+              <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Erro Sintático</span>
+            </div>
+            <div class="example-code">passo 1:
+  asse por (30 + 10 min a 180 graus;</div>
+            <p style="font-size: 0.8rem; color: #94a3b8;">Expressão com <code>(</code> sem o <code>)</code> de fechamento correspondente.</p>
+            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_sin_paren')">▶ Testar no Simulador</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: DIÁRIO DE BORDO -->
+    <div id="tab-diario" class="tab-panel">
+      <div class="timeline">
+        <h2 style="color: #fff; margin-bottom: 1.5rem;">Diário de Bordo & Decisões Arquiteturais</h2>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-date">23/09 — Concepção do Domínio e Ambiguidade Léxica</div>
+            <p style="color: #cbd5e1; font-size: 0.9rem;">Definimos o domínio (leitor de receitas) e a ideia central: <code>passo N</code> abre um bloco. No léxico, transformamos <code>PASSO</code> em um token único (<code>'passo' [ \t]* [0-9]+</code>), permitindo que tanto <code>passo 1</code> quanto <code>passo1</code> funcionem sem ambiguidade.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-date">23/09 — Decisão de Comentários (# vs //)</div>
+            <p style="color: #cbd5e1; font-size: 0.9rem;">Escolhemos <code>#</code> para comentários porque a barra <code>/</code> já é usada como divisão em frações numéricas (ex: <code>1/2 xicara</code>). Usar <code>//</code> traria conflitos léxicos desnecessários com operadores aritméticos.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-date">23/09 — Gramática Combinada para antlr4-parse</div>
+            <p style="color: #cbd5e1; font-size: 0.9rem;">Ao rodar <code>antlr4-parse</code>, o ANTLR exigiu uma regra de parser. Trocamos para <code>grammar Receita;</code> com o stub <code>programa : .*? EOF ;</code>. Isso permitiu testes imediatos sem compilar código e preparou o terreno perfeito para a E3.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-date">14/10 — Implementação da Etapa E3 (Parser & Árvore Sintática)</div>
+            <p style="color: #cbd5e1; font-size: 0.9rem;">Substituímos o stub provisório pela gramática sintática completa em <code>sintatica/</code>, com precedência de operadores e geração automatizada da Árvore Sintática (CST/AST) para todas as receitas.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // PRESET CODES
+    const PRESETS = {
+      ola: `# Receita simples de pao
+receita "Pao simples";
+porcoes 4;
+
+ingrediente farinha 500 g;
+ingrediente agua 300 ml;
+
+passo 1:
+  misture farinha, agua;
+passo 2:
+  asse por 40 min a 180 graus;`,
+
+      cenoura: `# Bolo de Cenoura caseiro
+receita "Bolo de cenoura";
+porcoes 8;
+
+ingrediente cenoura 3 un;
+ingrediente farinha 2.5 xicara;
+ingrediente acucar 1/2 xicara;
+ingrediente fermento 1 colher;
+
+passo 1:
+  bata cenoura, acucar;
+  adicione farinha;
+
+passo 2:
+  unte forma;
+  cozinhe em forma por 45 min a 180 graus;
+
+passo 3:
+  sirva "com cobertura de chocolate";`,
+
+      forma: `# Pao de forma com expressoes
+receita "Pao de forma";
+porcoes 12;
+
+ingrediente farinha 1 kg;
+ingrediente agua 600 ml;
+ingrediente sal 1 pitada;
+ingrediente fermento 10 g;
+total = 1000 + 600 * 2;
+
+passo1:
+  misture farinha, agua, sal;
+  adicione fermento;
+
+passo 2:
+  amasse por 10 min;
+  descanse por 1 h;
+
+passo 3:
+  modele "formato de pao de forma";
+  descanse ate 45 min;
+
+passo 4:
+  asse por (30 + 10) min a 200 graus;
+  sirva;`,
+
+      err_lex_char: `receita "Teste";
+ingrediente farinha 500 g;
+passo 1:
+  misture farinha @ agua;`,
+
+      err_lex_str: `receita "Texto sem aspa de fechamento;
+passo 1:
+  sirva;`,
+
+      err_lex_num: `receita "Numero malformado";
+ingrediente farinha 500. g;
+passo 1:
+  sirva;`,
+
+      err_sin_pontovirg: `receita "Esqueceu ponto e virgula";
+porcoes 4;
+ingrediente farinha 500 g
+passo 1:
+  misture farinha;`,
+
+      err_sin_passo: `receita "Passo sem dois pontos";
+porcoes 2;
+ingrediente agua 200 ml;
+passo 1
+  misture agua;`,
+
+      err_sin_paren: `receita "Parenteses aberto";
+passo 1:
+  asse por (30 + 10 min a 180 graus;`,
+
+      err_sin_fora: `receita "Comando fora do passo";
+porcoes 4;
+misture farinha, agua;
+passo 1:
+  sirva;`,
+
+      err_sin_unidade: `receita "Ingrediente sem unidade";
+porcoes 4;
+ingrediente farinha 500;
+passo 1:
+  sirva;`
+    };
+
+    // TAB SWITCHING
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+      
+      const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (targetBtn) targetBtn.classList.add('active');
+      
+      const targetPanel = document.getElementById('tab-' + tabId);
+      if (targetPanel) targetPanel.classList.add('active');
+    }
+
+    // EDITOR & LINE NUMBERS
+    const editor = document.getElementById('code-editor');
+    const lineNumbers = document.getElementById('line-numbers');
+    const lineCountBadge = document.getElementById('line-count');
+
+    function updateLineNumbers() {
+      const lines = editor.value.split('\n');
+      lineCountBadge.innerText = `${lines.length} linhas`;
+      lineNumbers.innerHTML = lines.map((_, i) => `<div class="line-number" id="ln-${i+1}">${i + 1}</div>`).join('');
+    }
+
+    function highlightLine(lineNum) {
+      document.querySelectorAll('.line-number').forEach(el => el.classList.remove('highlight-line'));
+      if (lineNum > 0) {
+        const el = document.getElementById(`ln-${lineNum}`);
+        if (el) el.classList.add('highlight-line');
+      }
+    }
+
+    function loadPreset(key) {
+      if (PRESETS[key]) {
+        editor.value = PRESETS[key];
+        updateLineNumbers();
+        resetAnimation();
+      }
+    }
+
+    function loadPresetAndSimulate(key) {
+      document.getElementById('preset-selector').value = key;
+      loadPreset(key);
+      switchTab('simulador');
+      setTimeout(startAnimation, 100);
+    }
+
+    // TOKENIZER IN JS
+    function tokenize(code) {
+      const tokens = [];
+      const errors = [];
+      let line = 1;
+      let col = 1;
+      let i = 0;
+
+      const KEYWORDS = {
+        'receita': 'RECEITA',
+        'porcoes': 'PORCOES',
+        'ingrediente': 'INGREDIENTE'
+      };
+
+      const ACTIONS = new Set(['misture', 'adicione', 'bata', 'amasse', 'descanse', 'asse', 'cozinhe', 'unte', 'modele', 'sirva']);
+      const PREPOSITIONS = new Set(['em', 'por', 'a', 'ate', 'com']);
+      const UNITS = new Set(['g', 'kg', 'ml', 'l', 'xicara', 'colher', 'pitada', 'un']);
+      const TIMES = new Set(['seg', 'min', 'h']);
+
+      while (i < code.length) {
+        const ch = code[i];
+
+        // Whitespace
+        if (ch === '\n') {
+          line++;
+          col = 1;
+          i++;
+          continue;
+        }
+        if (/\s/.test(ch)) {
+          col++;
+          i++;
+          continue;
+        }
+
+        // Comments (#...)
+        if (ch === '#') {
+          while (i < code.length && code[i] !== '\n') {
+            i++;
+          }
+          continue;
+        }
+
+        // Passo N (ex: passo 1, passo1)
+        const passoMatch = code.slice(i).match(/^passo[ \t]*[0-9]+/);
+        if (passoMatch) {
+          const text = passoMatch[0];
+          tokens.push({ type: 'PASSO', text, line, col });
+          i += text.length;
+          col += text.length;
+          continue;
+        }
+
+        // Strings
+        if (ch === '"') {
+          let str = '"';
+          let j = i + 1;
+          let closed = false;
+          while (j < code.length && code[j] !== '\n' && code[j] !== '\r') {
+            str += code[j];
+            if (code[j] === '"') {
+              closed = true;
+              j++;
+              break;
+            }
+            j++;
+          }
+          if (!closed) {
+            errors.push({ line, col, msg: `Texto sem fechar (faltou aspas de fechamento)` });
+            tokens.push({ type: 'ERROR', text: str, line, col });
+            break;
+          } else {
+            tokens.push({ type: 'TEXTO', text: str, line, col });
+            const len = j - i;
+            i = j;
+            col += len;
+            continue;
+          }
+        }
+
+        // Numbers & Malformed Numbers
+        if (/[0-9]/.test(ch)) {
+          let numStr = '';
+          let j = i;
+          while (j < code.length && /[0-9]/.test(code[j])) {
+            numStr += code[j++];
+          }
+          if (code[j] === '.') {
+            if (j + 1 < code.length && /[0-9]/.test(code[j + 1])) {
+              numStr += code[j++];
+              while (j < code.length && /[0-9]/.test(code[j])) {
+                numStr += code[j++];
+              }
+              tokens.push({ type: 'NUMERO', text: numStr, line, col });
+              col += (j - i);
+              i = j;
+              continue;
+            } else {
+              // 500. -> numero malformado
+              errors.push({ line, col: col + numStr.length, msg: `Número malformado (ponto sem dígitos após: '${numStr}.')` });
+              tokens.push({ type: 'NUMERO', text: numStr, line, col });
+              tokens.push({ type: 'ERROR', text: '.', line, col: col + numStr.length });
+              i = j + 1;
+              col += numStr.length + 1;
+              break;
+            }
+          } else {
+            tokens.push({ type: 'NUMERO', text: numStr, line, col });
+            col += (j - i);
+            i = j;
+            continue;
+          }
+        }
+
+        // Identifiers & Keywords
+        if (/[a-zA-Z_]/.test(ch)) {
+          let word = '';
+          let j = i;
+          while (j < code.length && /[a-zA-Z0-9_]/.test(code[j])) {
+            word += code[j++];
+          }
+
+          let type = 'IDENT';
+          if (KEYWORDS[word]) type = KEYWORDS[word];
+          else if (ACTIONS.has(word)) type = 'ACAO';
+          else if (PREPOSITIONS.has(word)) type = 'PREPOSICAO';
+          else if (UNITS.has(word)) type = 'UNIDADE';
+          else if (TIMES.has(word)) type = 'TEMPO';
+          else if (word === 'graus') type = 'TEMPERATURA';
+
+          tokens.push({ type, text: word, line, col });
+          col += (j - i);
+          i = j;
+          continue;
+        }
+
+        // Punctuations and single characters
+        const puncts = {
+          ';': 'PONTOVIRG', ':': 'DOISPONTOS', ',': 'VIRGULA',
+          '+': 'MAIS', '-': 'MENOS', '*': 'VEZES', '/': 'DIV',
+          '=': 'IGUAL', '(': 'ABREPAR', ')': 'FECHAPAR'
+        };
+
+        if (puncts[ch]) {
+          tokens.push({ type: puncts[ch], text: ch, line, col });
+          i++;
+          col++;
+          continue;
+        }
+
+        // Invalid character
+        errors.push({ line, col, msg: `Caractere inválido '${ch}'` });
+        tokens.push({ type: 'ERROR', text: ch, line, col });
+        i++;
+        col++;
+        break;
+      }
+
+      return { tokens, errors };
+    }
+
+    // PARSER IN JS (Builds Parse Tree)
+    function parse(tokens) {
+      let pos = 0;
+      const errors = [];
+
+      function current() { return tokens[pos] || { type: 'EOF', text: '<EOF>', line: 0, col: 0 }; }
+      function check(type) { return current().type === type; }
+      function match(type) {
+        if (check(type)) {
+          const t = current();
+          pos++;
+          return { name: t.type, text: t.text, isToken: true, line: t.line };
+        }
+        return null;
+      }
+
+      function expect(type, errorMsg) {
+        const m = match(type);
+        if (!m) {
+          const c = current();
+          errors.push({ line: c.line, col: c.col, msg: errorMsg || `Esperado ${type}, mas encontrado '${c.text}'` });
+          return null;
+        }
+        return m;
+      }
+
+      function programa() {
+        const node = { name: 'programa', children: [] };
+        if (check('RECEITA')) node.children.push(declaracao_receita());
+        if (check('PORCOES')) node.children.push(declaracao_porcoes());
+
+        while (pos < tokens.length && (check('INGREDIENTE') || (check('IDENT') && tokens[pos+1]?.type === 'IGUAL'))) {
+          if (check('INGREDIENTE')) node.children.push(declaracao_ingrediente());
+          else node.children.push(atribuicao());
+        }
+
+        // Verifica se há comando fora de passo
+        if (check('ACAO')) {
+          const c = current();
+          errors.push({ line: c.line, col: c.col, msg: `Comando de ação '${c.text}' fora de um bloco de passo!` });
+          return node;
+        }
+
+        while (pos < tokens.length && check('PASSO')) {
+          node.children.push(bloco_passo());
+        }
+
+        if (pos < tokens.length && current().type !== 'EOF' && errors.length === 0) {
+          const c = current();
+          errors.push({ line: c.line, col: c.col, msg: `Conteúdo inesperado ou fora de ordem próximo a '${c.text}'` });
+        }
+
+        return node;
+      }
+
+      function declaracao_receita() {
+        const node = { name: 'declaracao_receita', children: [] };
+        node.children.push(match('RECEITA'));
+        const t = expect('TEXTO', 'Faltou o nome da receita em formato de texto entre aspas');
+        if (t) node.children.push(t);
+        const p = expect('PONTOVIRG', "Faltou ';' no final da instrução 'receita'");
+        if (p) node.children.push(p);
+        return node;
+      }
+
+      function declaracao_porcoes() {
+        const node = { name: 'declaracao_porcoes', children: [] };
+        node.children.push(match('PORCOES'));
+        const n = expect('NUMERO', 'Faltou o número de porções');
+        if (n) node.children.push(n);
+        const p = expect('PONTOVIRG', "Faltou ';' após porções");
+        if (p) node.children.push(p);
+        return node;
+      }
+
+      function declaracao_ingrediente() {
+        const node = { name: 'declaracao_ingrediente', children: [] };
+        node.children.push(match('INGREDIENTE'));
+        const id = expect('IDENT', 'Faltou o nome do ingrediente');
+        if (id) node.children.push(id);
+        node.children.push(expr());
+        const u = expect('UNIDADE', `Faltou a unidade de medida para o ingrediente '${id?.text || ''}'`);
+        if (u) node.children.push(u);
+        const p = expect('PONTOVIRG', "Faltou ';' no final da declaração do ingrediente");
+        if (p) node.children.push(p);
+        return node;
+      }
+
+      function atribuicao() {
+        const node = { name: 'atribuicao', children: [] };
+        node.children.push(match('IDENT'));
+        expect('IGUAL', "Faltou '=' na atribuição");
+        node.children.push(expr());
+        expect('PONTOVIRG', "Faltou ';' no final da atribuição");
+        return node;
+      }
+
+      function bloco_passo() {
+        const node = { name: 'bloco_passo', children: [] };
+        node.children.push(match('PASSO'));
+        const dp = expect('DOISPONTOS', "Faltou ':' após a declaração do passo");
+        if (dp) node.children.push(dp);
+
+        while (pos < tokens.length && !check('PASSO') && !check('EOF') && errors.length === 0) {
+          if (check('ACAO')) {
+            node.children.push(comando_acao());
+          } else if (check('IDENT') && tokens[pos+1]?.type === 'IGUAL') {
+            node.children.push(atribuicao());
+          } else {
+            const c = current();
+            errors.push({ line: c.line, col: c.col, msg: `Instrução inválida dentro do passo: '${c.text}'` });
+            break;
+          }
+        }
+        return node;
+      }
+
+      function comando_acao() {
+        const node = { name: 'comando_acao', children: [] };
+        node.children.push(match('ACAO'));
+
+        if (check('IDENT') || check('TEXTO')) {
+          const args = { name: 'lista_argumentos', children: [] };
+          args.children.push(match(current().type));
+          while (check('VIRGULA')) {
+            args.children.push(match('VIRGULA'));
+            if (check('IDENT') || check('TEXTO')) {
+              args.children.push(match(current().type));
+            } else {
+              errors.push({ line: current().line, col: current().col, msg: "Faltou argumento após a vírgula" });
+              break;
+            }
+          }
+          node.children.push(args);
+        }
+
+        while (check('PREPOSICAO')) {
+          const mod = { name: 'modificador', children: [] };
+          mod.children.push(match('PREPOSICAO'));
+          if (check('NUMERO') || check('ABREPAR')) {
+            mod.children.push(expr());
+            if (check('TEMPO') || check('TEMPERATURA')) {
+              mod.children.push(match(current().type));
+            }
+          } else if (check('IDENT') || check('TEXTO')) {
+            mod.children.push(match(current().type));
+          }
+          node.children.push(mod);
+        }
+
+        expect('PONTOVIRG', "Faltou ';' no final do comando de ação");
+        return node;
+      }
+
+      function expr() {
+        return exprSoma();
+      }
+
+      function exprSoma() {
+        let left = exprMult();
+        while (check('MAIS') || check('MENOS')) {
+          const op = match(current().type);
+          const right = exprMult();
+          left = { name: 'expr', children: [left, op, right] };
+        }
+        return left;
+      }
+
+      function exprMult() {
+        let left = exprPrim();
+        while (check('VEZES') || check('DIV')) {
+          const op = match(current().type);
+          const right = exprPrim();
+          left = { name: 'expr', children: [left, op, right] };
+        }
+        return left;
+      }
+
+      function exprPrim() {
+        if (check('ABREPAR')) {
+          match('ABREPAR');
+          const inner = expr();
+          if (!check('FECHAPAR')) {
+            errors.push({ line: current().line, col: current().col, msg: "Faltou ')' para fechar a expressão" });
+          } else {
+            match('FECHAPAR');
+          }
+          return { name: 'expr_paren', children: [inner] };
+        }
+        if (check('NUMERO') || check('IDENT')) {
+          const t = match(current().type);
+          return { name: 'expr', children: [t] };
+        }
+        errors.push({ line: current().line, col: current().col, msg: `Expressão numérica inválida próxima a '${current().text}'` });
+        return { name: 'expr_err', children: [] };
+      }
+
+      const tree = programa();
+      return { tree, errors };
+    }
+
+    // ANIMATION ENGINE
+    let animationTimer = null;
+    let isRunning = false;
+    let stepIndex = 0;
+    let currentTokens = [];
+    let currentErrors = [];
+    let currentTree = null;
+
+    function resetAnimation() {
+      if (animationTimer) clearTimeout(animationTimer);
+      isRunning = false;
+      stepIndex = 0;
+      document.getElementById('btn-play').innerText = '▶ Animar';
+      document.getElementById('token-stream').innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; margin-top: 3rem;">Clique em <strong>▶ Animar</strong> para iniciar.</div>';
+      document.getElementById('token-count').innerText = '0 tokens';
+      document.getElementById('lexical-status').className = 'status-banner';
+      document.getElementById('lexical-status').innerHTML = '<span>Pronto para executar.</span>';
+      document.getElementById('syntactic-status').className = 'status-banner';
+      document.getElementById('syntactic-status').innerHTML = '<span>Aguardando análise sintática...</span>';
+      document.getElementById('parse-tree-svg').innerHTML = '';
+      document.getElementById('tree-text-container').innerText = '';
+      highlightLine(0);
+    }
+
+    function startAnimation() {
+      if (isRunning) {
+        clearTimeout(animationTimer);
+        isRunning = false;
+        document.getElementById('btn-play').innerText = '▶ Continuar';
+        return;
+      }
+
+      const code = editor.value;
+      const lexResult = tokenize(code);
+      currentTokens = lexResult.tokens;
+      currentErrors = lexResult.errors;
+
+      isRunning = true;
+      document.getElementById('btn-play').innerText = '⏸ Pausar';
+      document.getElementById('token-stream').innerHTML = '';
+      document.getElementById('lexical-status').className = 'status-banner';
+      document.getElementById('lexical-status').innerHTML = '<span>Processando tokens...</span>';
+
+      stepIndex = 0;
+      runNextTokenStep();
+    }
+
+    function runNextTokenStep() {
+      if (!isRunning) return;
+
+      if (stepIndex < currentTokens.length) {
+        const tok = currentTokens[stepIndex];
+        stepIndex++;
+
+        highlightLine(tok.line);
+
+        // Add token item to feed
+        const stream = document.getElementById('token-stream');
+        const item = document.createElement('div');
+        item.className = 'token-item';
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span class="token-tag tok-${tok.type}">${tok.type}</span>
+            <span class="token-text">${escapeHtml(tok.text)}</span>
+          </div>
+          <span class="token-line">L${tok.line}:C${tok.col}</span>
+        `;
+        stream.appendChild(item);
+        stream.scrollTop = stream.scrollHeight;
+        document.getElementById('token-count').innerText = `${stepIndex} tokens`;
+
+        // If this token was an error, stop with alert
+        if (tok.type === 'ERROR') {
+          isRunning = false;
+          document.getElementById('btn-play').innerText = '▶ Animar';
+          const err = currentErrors[0];
+          document.getElementById('lexical-status').className = 'status-banner status-error';
+          document.getElementById('lexical-status').innerHTML = `<span>⚠️ ERRO LÉXICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
+          document.getElementById('syntactic-status').className = 'status-banner status-error';
+          document.getElementById('syntactic-status').innerHTML = `<span>Compilação interrompida pelo analisador léxico.</span>`;
+          return;
+        }
+
+        const delay = parseInt(document.getElementById('speed-select').value);
+        animationTimer = setTimeout(runNextTokenStep, delay);
+      } else {
+        // Tokens finished, proceed to syntax analysis
+        finishLexicalPhase();
+      }
+    }
+
+    function finishLexicalPhase() {
+      document.getElementById('lexical-status').className = 'status-banner status-success';
+      document.getElementById('lexical-status').innerHTML = `<span>✓ Léxico concluído: ${currentTokens.length} tokens válidos reconhecidos!</span>`;
+
+      // Run Parser
+      const parseResult = parse(currentTokens);
+      currentTree = parseResult.tree;
+
+      if (parseResult.errors.length > 0) {
+        const err = parseResult.errors[0];
+        highlightLine(err.line);
+        document.getElementById('syntactic-status').className = 'status-banner status-error';
+        document.getElementById('syntactic-status').innerHTML = `<span>⚠️ ERRO SINTÁTICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
+      } else {
+        highlightLine(0);
+        document.getElementById('syntactic-status').className = 'status-banner status-success';
+        document.getElementById('syntactic-status').innerHTML = `<span>✓ Sintaxe válida! Árvore sintática construída com sucesso.</span>`;
+      }
+
+      // Render Tree
+      renderTreeSVG(currentTree);
+      renderTreeText(currentTree);
+
+      isRunning = false;
+      document.getElementById('btn-play').innerText = '▶ Animar';
+    }
+
+    function runInstant() {
+      resetAnimation();
+      const code = editor.value;
+      const lexResult = tokenize(code);
+      currentTokens = lexResult.tokens;
+      currentErrors = lexResult.errors;
+
+      const stream = document.getElementById('token-stream');
+      stream.innerHTML = '';
+      currentTokens.forEach(tok => {
+        const item = document.createElement('div');
+        item.className = 'token-item';
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span class="token-tag tok-${tok.type}">${tok.type}</span>
+            <span class="token-text">${escapeHtml(tok.text)}</span>
+          </div>
+          <span class="token-line">L${tok.line}:C${tok.col}</span>
+        `;
+        stream.appendChild(item);
+      });
+      document.getElementById('token-count').innerText = `${currentTokens.length} tokens`;
+
+      if (currentErrors.length > 0) {
+        const err = currentErrors[0];
+        highlightLine(err.line);
+        document.getElementById('lexical-status').className = 'status-banner status-error';
+        document.getElementById('lexical-status').innerHTML = `<span>⚠️ ERRO LÉXICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
+        document.getElementById('syntactic-status').className = 'status-banner status-error';
+        document.getElementById('syntactic-status').innerHTML = `<span>Compilação interrompida na fase léxica.</span>`;
+        return;
+      }
+
+      finishLexicalPhase();
+    }
+
+    // TREE RENDERING (SVG)
+    function renderTreeSVG(rootNode) {
+      const svg = document.getElementById('parse-tree-svg');
+      svg.innerHTML = '';
+      if (!rootNode) return;
+
+      // Layout algorithm: assign depth & x position
+      let currentX = 20;
+      const NODE_WIDTH = 110;
+      const NODE_HEIGHT = 28;
+      const LEVEL_HEIGHT = 65;
+
+      function layout(node, depth) {
+        node.depth = depth;
+        node.children = (node.children || []).filter(c => c !== null);
+
+        if (node.children.length === 0) {
+          node.x = currentX;
+          currentX += NODE_WIDTH + 15;
+        } else {
+          node.children.forEach(c => layout(c, depth + 1));
+          const first = node.children[0].x;
+          const last = node.children[node.children.length - 1].x;
+          node.x = (first + last) / 2;
+        }
+        node.y = 30 + depth * LEVEL_HEIGHT;
+      }
+
+      layout(rootNode, 0);
+
+      const totalWidth = Math.max(currentX + 50, 700);
+      let maxDepth = 0;
+      function getMaxDepth(n) {
+        if (n.depth > maxDepth) maxDepth = n.depth;
+        n.children.forEach(getMaxDepth);
+      }
+      getMaxDepth(rootNode);
+      const totalHeight = 60 + maxDepth * LEVEL_HEIGHT;
+
+      svg.setAttribute('width', totalWidth);
+      svg.setAttribute('height', totalHeight);
+      svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
+
+      // Draw Edges
+      function drawEdges(node) {
+        node.children.forEach(child => {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          const startX = node.x + NODE_WIDTH / 2;
+          const startY = node.y + NODE_HEIGHT;
+          const endX = child.x + NODE_WIDTH / 2;
+          const endY = child.y;
+          const midY = (startY + endY) / 2;
+          path.setAttribute('d', `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`);
+          path.setAttribute('class', 'tree-edge');
+          svg.appendChild(path);
+          drawEdges(child);
+        });
+      }
+      drawEdges(rootNode);
+
+      // Draw Nodes
+      function drawNodes(node) {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', node.x);
+        rect.setAttribute('y', node.y);
+        rect.setAttribute('width', NODE_WIDTH);
+        rect.setAttribute('height', NODE_HEIGHT);
+        rect.setAttribute('class', `node-rect ${node.isToken ? 'node-token' : 'node-rule'}`);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', node.x + NODE_WIDTH / 2);
+        text.setAttribute('y', node.y + NODE_HEIGHT / 2);
+        text.setAttribute('class', 'node-text');
+        
+        let label = node.name;
+        if (node.isToken && node.text) {
+          label = `${node.text}`;
+        }
+        if (label.length > 14) label = label.slice(0, 12) + '...';
+        text.textContent = label;
+
+        g.appendChild(rect);
+        g.appendChild(text);
+        svg.appendChild(g);
+
+        node.children.forEach(drawNodes);
+      }
+      drawNodes(rootNode);
+    }
+
+    // TREE TEXT
+    function renderTreeText(rootNode) {
+      const container = document.getElementById('tree-text-container');
+      let output = '';
+
+      function printNode(node, indent = 0) {
+        if (!node) return;
+        const spaces = '  '.repeat(indent);
+        if (node.isToken) {
+          output += `${spaces}'${node.text}'\n`;
+        } else {
+          output += `${spaces}(${node.name}\n`;
+          (node.children || []).forEach(child => printNode(child, indent + 1));
+          output += `${spaces})\n`;
+        }
+      }
+
+      printNode(rootNode, 0);
+      container.innerText = output;
+    }
+
+    function toggleTreeMode(mode) {
+      if (mode === 'svg') {
+        document.getElementById('tree-svg-container').style.display = 'block';
+        document.getElementById('tree-text-container').style.display = 'none';
+      } else {
+        document.getElementById('tree-svg-container').style.display = 'none';
+        document.getElementById('tree-text-container').style.display = 'block';
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Initialize with default preset
+    window.onload = function() {
+      loadPreset('ola');
+    };
+  </script>
+</body>
+</html>
