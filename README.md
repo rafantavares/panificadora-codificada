@@ -8,7 +8,7 @@ Projeto desenvolvido para a disciplina de **Linguagens Formais e Computabilidade
 
 ## 📁 Estrutura do Repositório
 
-O projeto está organizado em três diretórios principais:
+O projeto está organizado em dois módulos principais:
 
 1. **[`lexica/`](lexica/):** 
    - **Entrega 2 (E2):** Especificação da linguagem e Analisador Léxico.
@@ -17,9 +17,6 @@ O projeto está organizado em três diretórios principais:
 2. **[`sintatica/`](sintatica/):** 
    - **Entrega 3 (E3):** Analisador Sintático e Construção da Árvore Sintática (*Parse Tree*).
    - Gramática sintática livre de contexto (`gramatica/Receita.g4`), analisador sintático com árvore (`src/sintatico.py`), exemplos sintáticos válidos e inválidos, e suíte de testes automatizados (`tests/test_sintatico.py`).
-
-3. **[`conteudo/`](conteudo/):** 
-   - Slides das aulas e guia oficial de uso do ANTLR 4 da disciplina.
 
 ---
 
