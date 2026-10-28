@@ -388,32 +388,130 @@
     .tree-container {
       width: 100%;
       height: 100%;
-      overflow: auto;
-      background: #090e1a;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #0f172a 0%, #090e1a 100%);
       position: relative;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .tree-container.grabbing {
+      cursor: grabbing;
+    }
+
+    /* Grid pattern on tree background */
+    .tree-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    .sim-card.fullscreen-card {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 9999 !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
+
+    .tree-Creation-toolbar {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      display: flex;
+      gap: 0.35rem;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--card-border);
+      padding: 0.35rem;
+      border-radius: 8px;
+      z-index: 20;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      align-items: center;
+    }
+
+    .tree-Creation-toolbar .btn {
+      padding: 0.3rem 0.55rem;
+      font-size: 0.78rem;
+      background: #1e293b;
+    }
+
+    .zoom-badge {
+      font-family: var(--font-code);
+      font-size: 0.75rem;
+      color: var(--accent);
+      padding: 0 0.4rem;
+      min-width: 48px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .tree-help-hint {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #94a3b8;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.73rem;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    .tree-tooltip {
+      position: absolute;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent);
+      color: #f8fafc;
+      padding: 0.4rem 0.65rem;
+      border-radius: 6px;
+      font-family: var(--font-code);
+      font-size: 0.75rem;
+      pointer-events: none;
+      z-index: 30;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+      white-space: nowrap;
     }
 
     svg.parse-tree {
       display: block;
-      min-width: 100%;
-      min-height: 100%;
+      width: 100%;
+      height: 100%;
+    }
+
+    .node-group {
+      cursor: move;
     }
 
     .node-rect {
       rx: 6px;
       ry: 6px;
       stroke-width: 1.5;
-      transition: all 0.2s;
-      cursor: pointer;
+      transition: filter 0.15s, stroke-width 0.15s;
     }
 
-    .node-rect:hover {
-      filter: drop-shadow(0 0 8px var(--accent));
+    .node-group:hover .node-rect {
+      filter: drop-shadow(0 0 10px var(--accent));
+      stroke-width: 2.5;
     }
 
     .node-rule {
       fill: #1e293b;
       stroke: #38bdf8;
+    }
+
+    .node-collapsed {
+      fill: #312e81;
+      stroke: #a855f7;
+      stroke-dasharray: 3 2;
     }
 
     .node-token {
@@ -435,6 +533,12 @@
       stroke: #334155;
       stroke-width: 1.8;
       fill: none;
+      transition: stroke 0.15s, stroke-width 0.15s;
+    }
+
+    .tree-edge.edge-highlight {
+      stroke: var(--accent);
+      stroke-width: 2.8;
     }
 
     /* STATUS BANNER */
@@ -730,19 +834,29 @@
         </div>
 
         <!-- COL 3: ÁRVORE SINTÁTICA (SINTÁTICO) -->
-        <div class="sim-card">
+        <div class="sim-card" id="tree-card">
           <div class="card-header">
             <div class="card-title">🌳 Árvore Sintática (Parse Tree)</div>
-            <div style="display: flex; gap: 0.35rem;">
+            <div style="display: flex; gap: 0.35rem; align-items: center;">
               <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('svg')">Visual SVG</button>
               <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('text')">Texto Indentado</button>
+              <button id="btn-fullscreen-tree" class="btn btn-primary" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="toggleTreeFullscreen()">⛶ Tela Cheia</button>
             </div>
           </div>
           <div class="card-body">
             <div id="tree-svg-container" class="tree-container">
+              <div class="tree-help-hint">🖱️ Arraste o fundo para mover · Scroll para Zoom · Arraste os nós · Duplo-clique num nó para recolher/expandir</div>
+              <div id="tree-tooltip" class="tree-tooltip"></div>
+              <div class="tree-Creation-toolbar">
+                <button class="btn" title="Diminuir Zoom" onclick="zoomTree(0.8)">➖</button>
+                <span id="zoom-level" class="zoom-badge">100%</span>
+                <button class="btn" title="Aumentar Zoom" onclick="zoomTree(1.25)">➕</button>
+                <button class="btn" title="Ajustar árvore à tela" onclick="fitTreeToScreen()">🎯 Ajustar</button>
+                <button class="btn" title="Resetar posições dos nós" onclick="resetTreeNodes()">🔄 Resetar Nós</button>
+              </div>
               <svg id="parse-tree-svg" class="parse-tree"></svg>
             </div>
-            <div id="tree-text-container" class="tree-container" style="display: none; padding: 1rem; font-family: var(--font-code); font-size: 0.82rem; color: #38bdf8; white-space: pre;">
+            <div id="tree-text-container" class="tree-container" style="display: none; padding: 1rem; font-family: var(--font-code); font-size: 0.82rem; color: #38bdf8; white-space: pre; overflow: auto; cursor: text;">
             </div>
           </div>
           <div id="syntactic-status" class="status-banner">
@@ -1793,95 +1907,327 @@ passo 1:
       finishLexicalPhase();
     }
 
-    // TREE RENDERING (SVG)
-    function renderTreeSVG(rootNode) {
+    // =========================================================================
+    // INTERACTIVE PARSE TREE (SVG + PAN + ZOOM + DRAG NODES + COLLAPSE + FULLSCREEN)
+    // =========================================================================
+    let treePanX = 20;
+    let treePanY = 20;
+    let treeScale = 1;
+    let isPanningTree = false;
+    let panStartX = 0;
+    let panStartY = 0;
+    let draggedNode = null;
+    let dragNodeOffsetX = 0;
+    let dragNodeOffsetY = 0;
+    let treeBounds = { width: 800, height: 500 };
+
+    const NODE_WIDTH = 122;
+    const NODE_HEIGHT = 30;
+    const LEVEL_HEIGHT = 72;
+
+    function updateViewportTransform() {
+      const vp = document.getElementById('tree-viewport');
+      if (vp) {
+        vp.setAttribute('transform', `translate(${treePanX}, ${treePanY}) scale(${treeScale})`);
+      }
+      const badge = document.getElementById('zoom-level');
+      if (badge) {
+        badge.innerText = `${Math.round(treeScale * 100)}%`;
+      }
+    }
+
+    function zoomTree(factor, centerX, centerY) {
+      const container = document.getElementById('tree-svg-container');
+      const rect = container.getBoundingClientRect();
+      const cx = centerX !== undefined ? centerX : rect.width / 2;
+      const cy = centerY !== undefined ? centerY : rect.height / 2;
+
+      const newScale = Math.min(Math.max(treeScale * factor, 0.2), 3.5);
+      const scaleRatio = newScale / treeScale;
+
+      treePanX = cx - (cx - treePanX) * scaleRatio;
+      treePanY = cy - (cy - treePanY) * scaleRatio;
+      treeScale = newScale;
+      updateViewportTransform();
+    }
+
+    function fitTreeToScreen() {
+      if (!currentTree) return;
+      const container = document.getElementById('tree-svg-container');
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
+      const padding = 50;
+      const scaleX = (rect.width - padding * 2) / Math.max(treeBounds.width, 1);
+      const scaleY = (rect.height - padding * 2) / Math.max(treeBounds.height, 1);
+      treeScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.3), 1.4);
+
+      treePanX = (rect.width - treeBounds.width * treeScale) / 2;
+      treePanY = Math.max((rect.height - treeBounds.height * treeScale) / 2, 35);
+      updateViewportTransform();
+    }
+
+    function resetTreeNodes() {
+      if (!currentTree) return;
+      function clearCustomOffsets(n) {
+        delete n.customX;
+        delete n.customY;
+        n.collapsed = false;
+        (n.children || []).forEach(clearCustomOffsets);
+      }
+      clearCustomOffsets(currentTree);
+      renderTreeSVG(currentTree, true);
+    }
+
+    function toggleTreeFullscreen() {
+      const card = document.getElementById('tree-card');
+      const btn = document.getElementById('btn-fullscreen-tree');
+      const isFull = card.classList.toggle('fullscreen-card');
+      btn.innerText = isFull ? '✕ Sair da Tela Cheia (ESC)' : '⛶ Tela Cheia';
+      setTimeout(() => fitTreeToScreen(), 60);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const card = document.getElementById('tree-card');
+        if (card && card.classList.contains('fullscreen-card')) {
+          toggleTreeFullscreen();
+        }
+      }
+    });
+
+    function countSubtreeNodes(node) {
+      if (!node || !node.children || node.children.length === 0) return 0;
+      let total = node.children.length;
+      node.children.forEach(c => { total += countSubtreeNodes(c); });
+      return total;
+    }
+
+    function renderTreeSVG(rootNode, autoFit = true) {
       const svg = document.getElementById('parse-tree-svg');
       svg.innerHTML = '';
       if (!rootNode) return;
 
-      // Layout algorithm: assign depth & x position
       let currentX = 20;
-      const NODE_WIDTH = 110;
-      const NODE_HEIGHT = 28;
-      const LEVEL_HEIGHT = 65;
+      let maxX = 0;
+      let maxY = 0;
 
       function layout(node, depth) {
         node.depth = depth;
         node.children = (node.children || []).filter(c => c !== null);
+        const visibleChildren = node.collapsed ? [] : node.children;
 
-        if (node.children.length === 0) {
-          node.x = currentX;
-          currentX += NODE_WIDTH + 15;
+        if (visibleChildren.length === 0) {
+          if (node.customX === undefined) {
+            node.x = currentX;
+          } else {
+            node.x = node.customX;
+          }
+          currentX += NODE_WIDTH + 18;
         } else {
-          node.children.forEach(c => layout(c, depth + 1));
-          const first = node.children[0].x;
-          const last = node.children[node.children.length - 1].x;
-          node.x = (first + last) / 2;
+          visibleChildren.forEach(c => layout(c, depth + 1));
+          if (node.customX === undefined) {
+            const first = visibleChildren[0].x;
+            const last = visibleChildren[visibleChildren.length - 1].x;
+            node.x = (first + last) / 2;
+          } else {
+            node.x = node.customX;
+          }
         }
-        node.y = 30 + depth * LEVEL_HEIGHT;
+        node.y = node.customY !== undefined ? node.customY : (30 + depth * LEVEL_HEIGHT);
+        if (node.x + NODE_WIDTH > maxX) maxX = node.x + NODE_WIDTH;
+        if (node.y + NODE_HEIGHT > maxY) maxY = node.y + NODE_HEIGHT;
       }
 
       layout(rootNode, 0);
+      treeBounds = { width: maxX + 20, height: maxY + 30 };
 
-      const totalWidth = Math.max(currentX + 50, 700);
-      let maxDepth = 0;
-      function getMaxDepth(n) {
-        if (n.depth > maxDepth) maxDepth = n.depth;
-        n.children.forEach(getMaxDepth);
-      }
-      getMaxDepth(rootNode);
-      const totalHeight = 60 + maxDepth * LEVEL_HEIGHT;
+      const vp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      vp.setAttribute('id', 'tree-viewport');
+      svg.appendChild(vp);
 
-      svg.setAttribute('width', totalWidth);
-      svg.setAttribute('height', totalHeight);
-      svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
+      const edgesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const nodesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      vp.appendChild(edgesGroup);
+      vp.appendChild(nodesGroup);
 
-      // Draw Edges
-      function drawEdges(node) {
-        node.children.forEach(child => {
+      const edgeList = [];
+
+      function buildElements(node) {
+        const visibleChildren = node.collapsed ? [] : node.children;
+
+        visibleChildren.forEach(child => {
           const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          const startX = node.x + NODE_WIDTH / 2;
-          const startY = node.y + NODE_HEIGHT;
-          const endX = child.x + NODE_WIDTH / 2;
-          const endY = child.y;
-          const midY = (startY + endY) / 2;
-          path.setAttribute('d', `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`);
           path.setAttribute('class', 'tree-edge');
-          svg.appendChild(path);
-          drawEdges(child);
+          edgesGroup.appendChild(path);
+          edgeList.push({ parent: node, child, path });
+          buildElements(child);
         });
-      }
-      drawEdges(rootNode);
 
-      // Draw Nodes
-      function drawNodes(node) {
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'node-group');
+        g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+        node._el = g;
+
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', node.x);
-        rect.setAttribute('y', node.y);
         rect.setAttribute('width', NODE_WIDTH);
         rect.setAttribute('height', NODE_HEIGHT);
-        rect.setAttribute('class', `node-rect ${node.isToken ? 'node-token' : 'node-rule'}`);
+        let rectClass = 'node-rect ';
+        if (node.isToken) rectClass += 'node-token';
+        else if (node.collapsed) rectClass += 'node-collapsed';
+        else rectClass += 'node-rule';
+        rect.setAttribute('class', rectClass);
 
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', node.x + NODE_WIDTH / 2);
-        text.setAttribute('y', node.y + NODE_HEIGHT / 2);
+        text.setAttribute('x', NODE_WIDTH / 2);
+        text.setAttribute('y', NODE_HEIGHT / 2);
         text.setAttribute('class', 'node-text');
-        
+
         let label = node.name;
         if (node.isToken && node.text) {
           label = `${node.text}`;
+        } else if (node.collapsed) {
+          label = `${node.name} [+${countSubtreeNodes(node)}]`;
         }
-        if (label.length > 14) label = label.slice(0, 12) + '...';
+        if (label.length > 16) label = label.slice(0, 14) + '…';
         text.textContent = label;
 
         g.appendChild(rect);
         g.appendChild(text);
-        svg.appendChild(g);
+        nodesGroup.appendChild(g);
 
-        node.children.forEach(drawNodes);
+        // Node Dragging & Interactions
+        g.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          e.stopPropagation();
+          const containerRect = svg.getBoundingClientRect();
+          const mouseSvgX = (e.clientX - containerRect.left - treePanX) / treeScale;
+          const mouseSvgY = (e.clientY - containerRect.top - treePanY) / treeScale;
+          draggedNode = node;
+          dragNodeOffsetX = mouseSvgX - node.x;
+          dragNodeOffsetY = mouseSvgY - node.y;
+        });
+
+        // Double click to collapse/expand rule subtrees
+        g.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          if (!node.isToken && node.children && node.children.length > 0) {
+            node.collapsed = !node.collapsed;
+            renderTreeSVG(rootNode, false);
+          }
+        });
+
+        // Hover Tooltip & Edge Highlight
+        g.addEventListener('mouseenter', (e) => {
+          if (node.line) highlightLine(node.line);
+          edgeList.forEach(ed => {
+            if (ed.parent === node || ed.child === node) {
+              ed.path.classList.add('edge-highlight');
+            }
+          });
+          const tooltip = document.getElementById('tree-tooltip');
+          if (tooltip) {
+            tooltip.style.display = 'block';
+            if (node.isToken) {
+              tooltip.innerHTML = `<span style="color:var(--accent)">Token:</span> <b>${escapeHtml(node.name)}</b> · Lexema: <code>${escapeHtml(node.text)}</code> (Linha ${node.line || '?'})`;
+            } else {
+              const hint = node.children.length > 0 ? ' · <i>Duplo-clique p/ recolher/expandir</i>' : '';
+              tooltip.innerHTML = `<span style="color:#38bdf8">Regra Sintática:</span> <b>${escapeHtml(node.name)}</b> (${node.children.length} filhos)${hint}`;
+            }
+          }
+        });
+
+        g.addEventListener('mousemove', (e) => {
+          const tooltip = document.getElementById('tree-tooltip');
+          const container = document.getElementById('tree-svg-container');
+          if (tooltip && container) {
+            const cRect = container.getBoundingClientRect();
+            tooltip.style.left = `${Math.min(e.clientX - cRect.left + 14, cRect.width - 260)}px`;
+            tooltip.style.top = `${Math.max(e.clientY - cRect.top - 36, 10)}px`;
+          }
+        });
+
+        g.addEventListener('mouseleave', () => {
+          edgeList.forEach(ed => ed.path.classList.remove('edge-highlight'));
+          const tooltip = document.getElementById('tree-tooltip');
+          if (tooltip) tooltip.style.display = 'none';
+        });
       }
-      drawNodes(rootNode);
+
+      function updateAllEdges() {
+        edgeList.forEach(({ parent, child, path }) => {
+          const startX = parent.x + NODE_WIDTH / 2;
+          const startY = parent.y + NODE_HEIGHT;
+          const endX = child.x + NODE_WIDTH / 2;
+          const endY = child.y;
+          const midY = (startY + endY) / 2;
+          path.setAttribute('d', `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`);
+        });
+      }
+
+      svg._updateEdges = updateAllEdges;
+      buildElements(rootNode);
+      updateAllEdges();
+
+      if (autoFit) {
+        setTimeout(() => fitTreeToScreen(), 20);
+      } else {
+        updateViewportTransform();
+      }
+    }
+
+    // Setup Canvas Pan & Wheel Zoom Listeners Once
+    function initTreeCanvasInteractions() {
+      const container = document.getElementById('tree-svg-container');
+      const svg = document.getElementById('parse-tree-svg');
+      if (!container || !svg) return;
+
+      container.addEventListener('mousedown', (e) => {
+        if (e.button !== 0 || draggedNode) return;
+        isPanningTree = true;
+        container.classList.add('grabbing');
+        panStartX = e.clientX - treePanX;
+        panStartY = e.clientY - treePanY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (draggedNode) {
+          const containerRect = svg.getBoundingClientRect();
+          const mouseSvgX = (e.clientX - containerRect.left - treePanX) / treeScale;
+          const mouseSvgY = (e.clientY - containerRect.top - treePanY) / treeScale;
+          draggedNode.x = mouseSvgX - dragNodeOffsetX;
+          draggedNode.y = mouseSvgY - dragNodeOffsetY;
+          draggedNode.customX = draggedNode.x;
+          draggedNode.customY = draggedNode.y;
+          if (draggedNode._el) {
+            draggedNode._el.setAttribute('transform', `translate(${draggedNode.x}, ${draggedNode.y})`);
+          }
+          if (svg._updateEdges) svg._updateEdges();
+          return;
+        }
+        if (isPanningTree) {
+          treePanX = e.clientX - panStartX;
+          treePanY = e.clientY - panStartY;
+          updateViewportTransform();
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        draggedNode = null;
+        if (isPanningTree) {
+          isPanningTree = false;
+          container.classList.remove('grabbing');
+        }
+      });
+
+      container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const factor = e.deltaY < 0 ? 1.14 : 0.88;
+        zoomTree(factor, mouseX, mouseY);
+      }, { passive: false });
     }
 
     // TREE TEXT
@@ -1921,7 +2267,9 @@ passo 1:
 
     // Initialize with default preset
     window.onload = function() {
+      initTreeCanvasInteractions();
       loadPreset('ola');
+      runInstant();
     };
   </script>
 </body>
