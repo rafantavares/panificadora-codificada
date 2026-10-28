@@ -15,6 +15,21 @@ A gramática [`gramatica/Receita.g4`](gramatica/Receita.g4) define:
    - Adição e subtração (`+`, `-`)
    - Termos numéricos e identificadores
 
+## Mensagens de Erro e Recuperação (Modo Pânico)
+
+Toda mensagem de erro tem três partes: **onde** (linha e coluna), **o que esperava** e **o que encontrou**:
+
+```
+ERRO sintatico em exemplos/invalidos/falta_pontovirgula.rc, linha 4, coluna 1: esperava ';', encontrou 'passo 1'
+```
+
+Depois de um erro o analisador **não para**: ele entra em *modo pânico* (classe `ModoPanico` em [`src/sintatico.py`](src/sintatico.py)), descarta os tokens até um ponto seguro e recomeça dali. Assim todos os erros do arquivo aparecem de uma vez, mas sem *erros fantasmas* (mensagens que são só consequência do primeiro erro).
+
+- **Pontos de sincronização:** `;` (fim de comando) e `passo N` (começo de bloco). Nunca um operador como `+`, que aparece no meio das expressões.
+- Regras de dentro de um comando (`expr`, `argumento`, `modificador`...) param **antes** do `;`, para o próprio comando fechá-lo; os comandos e os laços de comandos consomem o `;` e seguem para o próximo.
+- Exemplo do encontro 13 ([`erro_fantasma.rc`](exemplos/invalidos/erro_fantasma.rc)): `total = 1 + ) * ( + 2 * ) + 3;` gera **1** mensagem, não 5.
+- [`varios_erros.rc`](exemplos/invalidos/varios_erros.rc) tem 3 erros reais em comandos diferentes e gera exatamente 3 mensagens.
+
 ## Como Executar
 
 ### 1. Recompilar o Parser (ANTLR)
@@ -38,4 +53,4 @@ python src/sintatico.py exemplos/validos/ola.rc --tree
 python tests/test_sintatico.py
 ```
 
-Roda os 3 programas válidos e os 6 programas inválidos (com erros sintáticos propositais como falta de ponto e vírgula, parênteses desbalanceados, comandos fora de passo, etc.).
+Roda os 3 programas válidos e os 8 programas inválidos (com erros sintáticos propositais como falta de ponto e vírgula, parênteses desbalanceados, comandos fora de passo, erro fantasma e vários erros no mesmo arquivo). Para cada inválido o teste confere o trecho da mensagem e **quantas** mensagens saíram (um erro real = uma mensagem).

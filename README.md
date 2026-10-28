@@ -16,7 +16,7 @@ O projeto está organizado em dois módulos principais:
 
 2. **[`sintatica/`](sintatica/):** 
    - **Entrega 3 (E3):** Analisador Sintático e Construção da Árvore Sintática (*Parse Tree*).
-   - Gramática sintática livre de contexto (`gramatica/Receita.g4`), analisador sintático com árvore (`src/sintatico.py`), exemplos sintáticos válidos e inválidos, e suíte de testes automatizados (`tests/test_sintatico.py`).
+   - Gramática sintática livre de contexto (`gramatica/Receita.g4`), analisador sintático com árvore e recuperação de erros em modo pânico (`src/sintatico.py`), exemplos sintáticos válidos e inválidos, e suíte de testes automatizados (`tests/test_sintatico.py`).
 
 ---
 
