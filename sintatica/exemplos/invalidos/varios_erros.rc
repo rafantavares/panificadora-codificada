@@ -1,0 +1,9 @@
+# Tres erros reais em comandos diferentes: o parser
+# sincroniza no ';' e reporta os tres de uma vez.
+receita "Varios erros";
+ingrediente farinha 500;
+total = 2 * * 3;
+passo 1:
+  misture farinha
+  asse por 40 min a 180 graus;
+  sirva;
