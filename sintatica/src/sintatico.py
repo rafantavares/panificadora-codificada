@@ -9,50 +9,117 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from antlr4 import CommonTokenStream, FileStream
+from antlr4 import CommonTokenStream, FileStream, Token
 from antlr4.error.ErrorListener import ErrorListener
+from antlr4.error.ErrorStrategy import DefaultErrorStrategy
+from antlr4.error.Errors import InputMismatchException
 from antlr4.tree.Trees import Trees
 
 from gerado.ReceitaLexer import ReceitaLexer
 from gerado.ReceitaParser import ReceitaParser
 
 
-class OuvinteErrosSintaticos(ErrorListener):
+# Nomes amigaveis para os tokens que nao tem um texto fixo
+NOMES = {
+    Token.EOF: "fim do arquivo",
+    ReceitaParser.PASSO: "'passo N'",
+    ReceitaParser.ACAO: "uma acao (misture, asse...)",
+    ReceitaParser.PREPOSICAO: "uma preposicao (em, por, a, ate, com)",
+    ReceitaParser.UNIDADE: "uma unidade (g, kg, ml, xicara...)",
+    ReceitaParser.TEMPO: "um tempo (seg, min, h)",
+    ReceitaParser.NUMERO: "um numero",
+    ReceitaParser.TEXTO: "um texto",
+    ReceitaParser.IDENT: "um nome",
+}
+
+
+def nome_token(tipo):
+    if tipo in NOMES:
+        return NOMES[tipo]
+    return ReceitaParser.literalNames[tipo]
+
+
+def texto_encontrado(token):
+    if token.type == Token.EOF:
+        return "fim do arquivo"
+    return f"'{token.text}'"
+
+
+class ModoPanico(DefaultErrorStrategy):
+    """Recuperacao em modo panico: depois de um erro, joga fora tudo ate um
+    ponto seguro (';' ou 'passo N') e recomeca dali, sem gerar mensagens
+    fantasmas para os tokens descartados."""
+
+    SINCRONIZA = {ReceitaParser.PONTOVIRG, ReceitaParser.PASSO, Token.EOF}
+
+    # Regras que ficam dentro de um comando: param ANTES do ';',
+    # para o proprio comando consumir o ';' dele
+    DENTRO_DO_COMANDO = {
+        ReceitaParser.RULE_expr,
+        ReceitaParser.RULE_lista_argumentos,
+        ReceitaParser.RULE_argumento,
+        ReceitaParser.RULE_modificador,
+        ReceitaParser.RULE_complemento,
+    }
+
+    def sincroniza(self, parser):
+        while parser.getTokenStream().LA(1) not in self.SINCRONIZA:
+            parser.consume()
+        if parser.getTokenStream().LA(1) == ReceitaParser.PONTOVIRG and \
+                parser._ctx.getRuleIndex() not in self.DENTRO_DO_COMANDO:
+            parser.consume()
+
+    def recover(self, parser, e):
+        self.sincroniza(parser)
+
+    def sync(self, parser):
+        # Chamado pelo ANTLR antes de cada laco/opcao da gramatica
+        if self.inErrorRecoveryMode(parser):
+            return
+        if parser.getTokenStream().LA(1) in parser.getExpectedTokens():
+            return
+        self.reporta(parser, parser.getCurrentToken(), parser.getExpectedTokens())
+        if parser._ctx.getRuleIndex() in (ReceitaParser.RULE_programa, ReceitaParser.RULE_bloco_passo):
+            # Laco de comandos: descarta o comando errado e continua no laco
+            self.sincroniza(parser)
+        else:
+            # Dentro de um comando: sai da regra e o recover() sincroniza
+            raise InputMismatchException(parser)
+
+    # Toda mensagem tem: onde (linha e coluna), o que esperava e o que encontrou
+    def reporta(self, parser, token, esperados):
+        if self.inErrorRecoveryMode(parser):
+            return
+        self.beginErrorCondition(parser)
+        # "fim do arquivo" (EOF = -1) vai por ultimo na lista
+        tipos = sorted(esperados, key=lambda t: t == Token.EOF)
+        nomes = [nome_token(t) for t in tipos]
+        if len(nomes) > 1:
+            esperava = ", ".join(nomes[:-1]) + " ou " + nomes[-1]
+        else:
+            esperava = nomes[0]
+        parser.notifyErrorListeners(f"esperava {esperava}, encontrou {texto_encontrado(token)}", token, None)
+
+    def reportError(self, parser, e):
+        self.reporta(parser, e.offendingToken, e.getExpectedTokens())
+
+    def reportMissingToken(self, parser):
+        self.reporta(parser, parser.getCurrentToken(), parser.getExpectedTokens())
+
+    def reportUnwantedToken(self, parser):
+        self.reporta(parser, parser.getCurrentToken(), parser.getExpectedTokens())
+
+
+class OuvinteErros(ErrorListener):
     def __init__(self):
         super().__init__()
         self.erros = []
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        texto = offendingSymbol.text if offendingSymbol else "?"
-        self.erros.append({
-            "linha": line,
-            "coluna": column + 1,
-            "simbolo": texto,
-            "msg_original": msg,
-        })
-
-
-def formatar_erro_sintatico(erro, caminho):
-    msg = erro["msg_original"]
-    simbolo = erro["simbolo"]
-
-    # Traduz mensagens padrao do ANTLR para mensagens claras em portugues
-    if "missing ';'" in msg.lower() or "missing PONTOVIRG" in msg:
-        desc = "faltou ';' no final da instrucao"
-    elif "missing ':'" in msg.lower() or "missing DOISPONTOS" in msg:
-        desc = "faltou ':' apos a declaracao do passo"
-    elif "missing ')'" in msg.lower() or "missing FECHAPAR" in msg:
-        desc = "faltou ')' para fechar a expressao"
-    elif "mismatched input" in msg.lower():
-        desc = f"simbolo inesperado {simbolo!r}"
-    elif "no viable alternative" in msg.lower():
-        desc = f"estrutura sintatica invalida proximo a {simbolo!r}"
-    elif "extraneous input" in msg.lower():
-        desc = f"conteudo a mais ou fora de ordem proximo a {simbolo!r}"
-    else:
-        desc = f"erro proximo a {simbolo!r} ({msg})"
-
-    return f"ERRO sintatico: {desc} em {caminho}, linha {erro['linha']}, coluna {erro['coluna']}"
+        if isinstance(recognizer, ReceitaLexer):
+            # O lexer avisa "token recognition error at: '?'"
+            msg = "caractere invalido " + msg.split("at: ")[-1]
+        self.erros.append((line, column + 1, msg))
 
 
 def imprimir_arvore_indentada(no, parser, nivel=0):
@@ -85,24 +152,25 @@ def main():
     # 1. Analise Lexica
     entrada = FileStream(caminho, encoding="utf-8")
     lexer = ReceitaLexer(entrada)
-    ouvinte_lexer = OuvinteErrosSintaticos()
+    ouvinte_lexer = OuvinteErros()
     lexer.removeErrorListeners()
     lexer.addErrorListener(ouvinte_lexer)
 
     # 2. Analise Sintatica
     tokens = CommonTokenStream(lexer)
     parser = ReceitaParser(tokens)
-    ouvinte_parser = OuvinteErrosSintaticos()
+    ouvinte_parser = OuvinteErros()
     parser.removeErrorListeners()
     parser.addErrorListener(ouvinte_parser)
+    parser._errHandler = ModoPanico()
 
     # Dispara a analise a partir da regra inicial (programa)
     arvore = parser.programa()
 
     erros = ouvinte_lexer.erros + ouvinte_parser.erros
     if erros:
-        for erro in erros:
-            print(formatar_erro_sintatico(erro, caminho), file=sys.stderr)
+        for linha, coluna, msg in sorted(erros):
+            print(f"ERRO sintatico em {caminho}, linha {linha}, coluna {coluna}: {msg}", file=sys.stderr)
         return 1
 
     print(f"OK sintatico: '{caminho}' compilado com sucesso sem erros de sintaxe.")
