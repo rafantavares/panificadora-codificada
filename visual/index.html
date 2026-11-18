@@ -386,11 +386,12 @@
 
     /* PARSE TREE CANVAS / SVG */
     .tree-container {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: radial-gradient(circle at center, #0f172a 0%, #090e1a 100%);
-      position: relative;
       cursor: grab;
       user-select: none;
     }
@@ -419,26 +420,28 @@
       border: none !important;
     }
 
-    .tree-Creation-toolbar {
+    .tree-floating-toolbar {
       position: absolute;
       bottom: 14px;
       right: 14px;
       display: flex;
       gap: 0.35rem;
-      background: rgba(15, 23, 42, 0.9);
+      background: rgba(15, 23, 42, 0.92);
       backdrop-filter: blur(6px);
       border: 1px solid var(--card-border);
       padding: 0.35rem;
       border-radius: 8px;
-      z-index: 20;
+      z-index: 50;
+      pointer-events: auto;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
       align-items: center;
     }
 
-    .tree-Creation-toolbar .btn {
+    .tree-floating-toolbar .btn {
       padding: 0.3rem 0.55rem;
       font-size: 0.78rem;
       background: #1e293b;
+      pointer-events: auto;
     }
 
     .zoom-badge {
@@ -482,6 +485,8 @@
     }
 
     svg.parse-tree {
+      position: absolute;
+      inset: 0;
       display: block;
       width: 100%;
       height: 100%;
@@ -489,18 +494,25 @@
 
     .node-group {
       cursor: move;
+      transition: opacity 0.22s ease;
     }
 
     .node-rect {
       rx: 6px;
       ry: 6px;
       stroke-width: 1.5;
-      transition: filter 0.15s, stroke-width 0.15s;
+      transition: stroke 0.15s, stroke-width 0.15s, fill 0.15s;
     }
 
     .node-group:hover .node-rect {
-      filter: drop-shadow(0 0 10px var(--accent));
-      stroke-width: 2.5;
+      stroke: #fbbf24 !important;
+      stroke-width: 2.8px !important;
+    }
+
+    .node-active .node-rect {
+      stroke: #fbbf24 !important;
+      stroke-width: 3.2px !important;
+      fill: #3b2f13 !important;
     }
 
     .node-rule {
@@ -533,7 +545,7 @@
       stroke: #334155;
       stroke-width: 1.8;
       fill: none;
-      transition: stroke 0.15s, stroke-width 0.15s;
+      transition: opacity 0.22s ease, stroke 0.15s, stroke-width 0.15s;
     }
 
     .tree-edge.edge-highlight {
@@ -845,16 +857,16 @@
           </div>
           <div class="card-body">
             <div id="tree-svg-container" class="tree-container">
+              <svg id="parse-tree-svg" class="parse-tree"></svg>
               <div class="tree-help-hint">🖱️ Arraste o fundo para mover · Scroll para Zoom · Arraste os nós · Duplo-clique num nó para recolher/expandir</div>
               <div id="tree-tooltip" class="tree-tooltip"></div>
-              <div class="tree-Creation-toolbar">
-                <button class="btn" title="Diminuir Zoom" onclick="zoomTree(0.8)">➖</button>
+              <div class="tree-floating-toolbar" onmousedown="event.stopPropagation()" ondblclick="event.stopPropagation()">
+                <button type="button" class="btn" title="Diminuir Zoom" onclick="zoomTree(0.8)">➖</button>
                 <span id="zoom-level" class="zoom-badge">100%</span>
-                <button class="btn" title="Aumentar Zoom" onclick="zoomTree(1.25)">➕</button>
-                <button class="btn" title="Ajustar árvore à tela" onclick="fitTreeToScreen()">🎯 Ajustar</button>
-                <button class="btn" title="Resetar posições dos nós" onclick="resetTreeNodes()">🔄 Resetar Nós</button>
+                <button type="button" class="btn" title="Aumentar Zoom" onclick="zoomTree(1.25)">➕</button>
+                <button type="button" class="btn" title="Ajustar árvore à tela" onclick="fitTreeToScreen()">🎯 Ajustar</button>
+                <button type="button" id="btn-reset-nodes" class="btn" title="Resetar posições dos nós e expandir subárvores" onclick="resetTreeNodes(event)">🔄 Resetar Nós</button>
               </div>
-              <svg id="parse-tree-svg" class="parse-tree"></svg>
             </div>
             <div id="tree-text-container" class="tree-container" style="display: none; padding: 1rem; font-family: var(--font-code); font-size: 0.82rem; color: #38bdf8; white-space: pre; overflow: auto; cursor: text;">
             </div>
@@ -1376,17 +1388,20 @@ passo 1:
       }
     }
 
-    function loadPreset(key) {
+    function loadPreset(key, runNow = true) {
       if (PRESETS[key]) {
         editor.value = PRESETS[key];
         updateLineNumbers();
         resetAnimation();
+        if (runNow) {
+          runInstant();
+        }
       }
     }
 
     function loadPresetAndSimulate(key) {
       document.getElementById('preset-selector').value = key;
-      loadPreset(key);
+      loadPreset(key, false);
       switchTab('simulador');
       setTimeout(startAnimation, 100);
     }
@@ -1753,18 +1768,35 @@ passo 1:
       return { tree, errors };
     }
 
-    // ANIMATION ENGINE
+    // ANIMATION ENGINE (LEXICAL + SYNTACTIC TREE STEP-BY-STEP)
     let animationTimer = null;
     let isRunning = false;
+    let isPaused = false;
+    let animPhase = 'idle'; // 'idle' | 'lex' | 'tree'
     let stepIndex = 0;
+    let treeStepIndex = 0;
+    let treeAnimSteps = [];
+    let activeTreeNodeEl = null;
     let currentTokens = [];
     let currentErrors = [];
+    let currentParseErrors = [];
     let currentTree = null;
 
     function resetAnimation() {
       if (animationTimer) clearTimeout(animationTimer);
       isRunning = false;
+      isPaused = false;
+      animPhase = 'idle';
       stepIndex = 0;
+      treeStepIndex = 0;
+      treeAnimSteps = [];
+      if (activeTreeNodeEl) {
+        activeTreeNodeEl.classList.remove('node-active');
+        activeTreeNodeEl = null;
+      }
+      currentTree = null;
+      draggedNode = null;
+      isPanningTree = false;
       document.getElementById('btn-play').innerText = '▶ Animar';
       document.getElementById('token-stream').innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; margin-top: 3rem;">Clique em <strong>▶ Animar</strong> para iniciar.</div>';
       document.getElementById('token-count').innerText = '0 tokens';
@@ -1778,30 +1810,50 @@ passo 1:
     }
 
     function startAnimation() {
+      // Pause if currently running
       if (isRunning) {
         clearTimeout(animationTimer);
         isRunning = false;
+        isPaused = true;
         document.getElementById('btn-play').innerText = '▶ Continuar';
         return;
       }
 
+      // Resume if paused
+      if (isPaused) {
+        isPaused = false;
+        isRunning = true;
+        document.getElementById('btn-play').innerText = '⏸ Pausar';
+        if (animPhase === 'lex') {
+          runNextTokenStep();
+        } else if (animPhase === 'tree') {
+          runNextTreeStep();
+        }
+        return;
+      }
+
+      // Start fresh animation
+      resetAnimation();
       const code = editor.value;
       const lexResult = tokenize(code);
       currentTokens = lexResult.tokens;
       currentErrors = lexResult.errors;
 
       isRunning = true;
+      animPhase = 'lex';
       document.getElementById('btn-play').innerText = '⏸ Pausar';
       document.getElementById('token-stream').innerHTML = '';
       document.getElementById('lexical-status').className = 'status-banner';
-      document.getElementById('lexical-status').innerHTML = '<span>Processando tokens...</span>';
+      document.getElementById('lexical-status').innerHTML = '<span>Fase 1/2: Analisando tokens...</span>';
+      document.getElementById('syntactic-status').className = 'status-banner';
+      document.getElementById('syntactic-status').innerHTML = '<span>Aguardando término da fase léxica...</span>';
 
       stepIndex = 0;
       runNextTokenStep();
     }
 
     function runNextTokenStep() {
-      if (!isRunning) return;
+      if (!isRunning || animPhase !== 'lex') return;
 
       if (stepIndex < currentTokens.length) {
         const tok = currentTokens[stepIndex];
@@ -1809,7 +1861,6 @@ passo 1:
 
         highlightLine(tok.line);
 
-        // Add token item to feed
         const stream = document.getElementById('token-stream');
         const item = document.createElement('div');
         item.className = 'token-item';
@@ -1824,9 +1875,9 @@ passo 1:
         stream.scrollTop = stream.scrollHeight;
         document.getElementById('token-count').innerText = `${stepIndex} tokens`;
 
-        // If this token was an error, stop with alert
         if (tok.type === 'ERROR') {
           isRunning = false;
+          animPhase = 'idle';
           document.getElementById('btn-play').innerText = '▶ Animar';
           const err = currentErrors[0];
           document.getElementById('lexical-status').className = 'status-banner status-error';
@@ -1839,35 +1890,85 @@ passo 1:
         const delay = parseInt(document.getElementById('speed-select').value);
         animationTimer = setTimeout(runNextTokenStep, delay);
       } else {
-        // Tokens finished, proceed to syntax analysis
-        finishLexicalPhase();
+        startTreeAnimationPhase();
       }
     }
 
-    function finishLexicalPhase() {
+    function startTreeAnimationPhase() {
       document.getElementById('lexical-status').className = 'status-banner status-success';
       document.getElementById('lexical-status').innerHTML = `<span>✓ Léxico concluído: ${currentTokens.length} tokens válidos reconhecidos!</span>`;
 
-      // Run Parser
       const parseResult = parse(currentTokens);
       currentTree = parseResult.tree;
+      currentParseErrors = parseResult.errors;
 
-      if (parseResult.errors.length > 0) {
-        const err = parseResult.errors[0];
+      renderTreeText(currentTree);
+      // Render SVG with all nodes initially hidden so we can animate them one by one
+      renderTreeSVG(currentTree, true, true);
+
+      animPhase = 'tree';
+      treeStepIndex = 0;
+      document.getElementById('syntactic-status').className = 'status-banner';
+      document.getElementById('syntactic-status').innerHTML = `<span>Fase 2/2: Construindo Árvore Sintática (0/${treeAnimSteps.length} nós)...</span>`;
+
+      const delay = parseInt(document.getElementById('speed-select').value);
+      animationTimer = setTimeout(runNextTreeStep, delay);
+    }
+
+    function runNextTreeStep() {
+      if (!isRunning || animPhase !== 'tree') return;
+
+      if (activeTreeNodeEl) {
+        activeTreeNodeEl.classList.remove('node-active');
+        activeTreeNodeEl = null;
+      }
+
+      if (treeStepIndex < treeAnimSteps.length) {
+        const step = treeAnimSteps[treeStepIndex];
+        treeStepIndex++;
+
+        if (step.edgeEl) {
+          step.edgeEl.style.opacity = '1';
+        }
+        if (step.nodeEl) {
+          step.nodeEl.style.opacity = '1';
+          step.nodeEl.classList.add('node-active');
+          activeTreeNodeEl = step.nodeEl;
+        }
+        if (step.node && step.node.line) {
+          highlightLine(step.node.line);
+        }
+
+        document.getElementById('syntactic-status').innerHTML =
+          `<span>Fase 2/2: Construindo Árvore Sintática (${treeStepIndex}/${treeAnimSteps.length} nós) — <b>${escapeHtml(step.node.name)}</b></span>`;
+
+        const delay = Math.max(Math.round(parseInt(document.getElementById('speed-select').value) * 0.75), 25);
+        animationTimer = setTimeout(runNextTreeStep, delay);
+      } else {
+        finalizeTreeAnimation();
+      }
+    }
+
+    function finalizeTreeAnimation() {
+      if (activeTreeNodeEl) {
+        activeTreeNodeEl.classList.remove('node-active');
+        activeTreeNodeEl = null;
+      }
+
+      if (currentParseErrors && currentParseErrors.length > 0) {
+        const err = currentParseErrors[0];
         highlightLine(err.line);
         document.getElementById('syntactic-status').className = 'status-banner status-error';
         document.getElementById('syntactic-status').innerHTML = `<span>⚠️ ERRO SINTÁTICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
       } else {
         highlightLine(0);
         document.getElementById('syntactic-status').className = 'status-banner status-success';
-        document.getElementById('syntactic-status').innerHTML = `<span>✓ Sintaxe válida! Árvore sintática construída com sucesso.</span>`;
+        document.getElementById('syntactic-status').innerHTML = `<span>✓ Sintaxe válida! Árvore sintática construída com sucesso (${treeAnimSteps.length} nós).</span>`;
       }
 
-      // Render Tree
-      renderTreeSVG(currentTree);
-      renderTreeText(currentTree);
-
       isRunning = false;
+      isPaused = false;
+      animPhase = 'idle';
       document.getElementById('btn-play').innerText = '▶ Animar';
     }
 
@@ -1904,7 +2005,16 @@ passo 1:
         return;
       }
 
-      finishLexicalPhase();
+      document.getElementById('lexical-status').className = 'status-banner status-success';
+      document.getElementById('lexical-status').innerHTML = `<span>✓ Léxico concluído: ${currentTokens.length} tokens válidos reconhecidos!</span>`;
+
+      const parseResult = parse(currentTokens);
+      currentTree = parseResult.tree;
+      currentParseErrors = parseResult.errors;
+
+      renderTreeSVG(currentTree, true, false);
+      renderTreeText(currentTree);
+      finalizeTreeAnimation();
     }
 
     // =========================================================================
@@ -1917,6 +2027,9 @@ passo 1:
     let panStartX = 0;
     let panStartY = 0;
     let draggedNode = null;
+    let dragStartClientX = 0;
+    let dragStartClientY = 0;
+    let dragHasMoved = false;
     let dragNodeOffsetX = 0;
     let dragNodeOffsetY = 0;
     let treeBounds = { width: 800, height: 500 };
@@ -1957,26 +2070,89 @@ passo 1:
       const rect = container.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
 
-      const padding = 50;
-      const scaleX = (rect.width - padding * 2) / Math.max(treeBounds.width, 1);
-      const scaleY = (rect.height - padding * 2) / Math.max(treeBounds.height, 1);
-      treeScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.3), 1.4);
+      const padding = 45;
+      const availW = Math.max(rect.width - padding * 2, 100);
+      const availH = Math.max(rect.height - padding * 2, 100);
+      const scaleX = availW / Math.max(treeBounds.width, 1);
+      const scaleY = availH / Math.max(treeBounds.height, 1);
+      treeScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.25), 1.35);
 
       treePanX = (rect.width - treeBounds.width * treeScale) / 2;
-      treePanY = Math.max((rect.height - treeBounds.height * treeScale) / 2, 35);
+      treePanY = Math.max((rect.height - treeBounds.height * treeScale) / 2, 36);
       updateViewportTransform();
     }
 
-    function resetTreeNodes() {
+    let resetBtnFeedbackTimer = null;
+
+    function resetTreeNodes(e) {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      draggedNode = null;
+      dragHasMoved = false;
+      isPanningTree = false;
+      const container = document.getElementById('tree-svg-container');
+      if (container) container.classList.remove('grabbing');
+
+      // If we are in Phase 1 (lexical animation), there is no tree yet
+      if (animPhase === 'lex' && (isRunning || isPaused)) {
+        return;
+      }
+
+      // If there is no tree currently rendered (e.g. after Reset or code change), parse and render immediately
+      const svg = document.getElementById('parse-tree-svg');
+      if (!currentTree || !svg || svg.children.length === 0) {
+        const lexResult = tokenize(editor.value);
+        if (lexResult.errors.length === 0) {
+          currentTokens = lexResult.tokens;
+          const parseResult = parse(currentTokens);
+          currentTree = parseResult.tree;
+          currentParseErrors = parseResult.errors;
+        }
+      }
       if (!currentTree) return;
+
       function clearCustomOffsets(n) {
+        if (!n) return;
         delete n.customX;
         delete n.customY;
+        delete n.x;
+        delete n.y;
+        delete n.depth;
+        delete n._el;
         n.collapsed = false;
         (n.children || []).forEach(clearCustomOffsets);
       }
       clearCustomOffsets(currentTree);
-      renderTreeSVG(currentTree, true);
+
+      // If currently animating or paused in Phase 2 (tree construction), preserve animation step progress
+      if (animPhase === 'tree' && (isRunning || isPaused)) {
+        renderTreeSVG(currentTree, true, true);
+        const upto = Math.min(treeStepIndex, treeAnimSteps.length);
+        for (let i = 0; i < upto; i++) {
+          const st = treeAnimSteps[i];
+          if (st.edgeEl) st.edgeEl.style.opacity = '1';
+          if (st.nodeEl) st.nodeEl.style.opacity = '1';
+        }
+        if (upto > 0 && treeAnimSteps[upto - 1] && treeAnimSteps[upto - 1].nodeEl) {
+          activeTreeNodeEl = treeAnimSteps[upto - 1].nodeEl;
+          activeTreeNodeEl.classList.add('node-active');
+        }
+      } else {
+        renderTreeSVG(currentTree, true, false);
+      }
+
+      fitTreeToScreen();
+
+      const btn = document.getElementById('btn-reset-nodes');
+      if (btn) {
+        if (resetBtnFeedbackTimer) clearTimeout(resetBtnFeedbackTimer);
+        btn.innerText = '✓ Nós Resetados';
+        resetBtnFeedbackTimer = setTimeout(() => {
+          btn.innerText = '🔄 Resetar Nós';
+        }, 900);
+      }
     }
 
     function toggleTreeFullscreen() {
@@ -1984,7 +2160,7 @@ passo 1:
       const btn = document.getElementById('btn-fullscreen-tree');
       const isFull = card.classList.toggle('fullscreen-card');
       btn.innerText = isFull ? '✕ Sair da Tela Cheia (ESC)' : '⛶ Tela Cheia';
-      setTimeout(() => fitTreeToScreen(), 60);
+      requestAnimationFrame(() => fitTreeToScreen());
     }
 
     document.addEventListener('keydown', (e) => {
@@ -2003,9 +2179,10 @@ passo 1:
       return total;
     }
 
-    function renderTreeSVG(rootNode, autoFit = true) {
+    function renderTreeSVG(rootNode, autoFit = true, hiddenForAnim = false) {
       const svg = document.getElementById('parse-tree-svg');
       svg.innerHTML = '';
+      treeAnimSteps = [];
       if (!rootNode) return;
 
       let currentX = 20;
@@ -2053,20 +2230,15 @@ passo 1:
 
       const edgeList = [];
 
-      function buildElements(node) {
+      function buildElements(node, incomingEdgePath = null) {
         const visibleChildren = node.collapsed ? [] : node.children;
-
-        visibleChildren.forEach(child => {
-          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          path.setAttribute('class', 'tree-edge');
-          edgesGroup.appendChild(path);
-          edgeList.push({ parent: node, child, path });
-          buildElements(child);
-        });
 
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('class', 'node-group');
         g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+        if (hiddenForAnim) {
+          g.style.opacity = '0';
+        }
         node._el = g;
 
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -2096,14 +2268,32 @@ passo 1:
         g.appendChild(text);
         nodesGroup.appendChild(g);
 
+        // Register step in pre-order (parent before children) for natural top-down tree animation
+        treeAnimSteps.push({ node, nodeEl: g, edgeEl: incomingEdgePath });
+
+        visibleChildren.forEach(child => {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('class', 'tree-edge');
+          if (hiddenForAnim) {
+            path.style.opacity = '0';
+          }
+          edgesGroup.appendChild(path);
+          edgeList.push({ parent: node, child, path });
+          buildElements(child, path);
+        });
+
         // Node Dragging & Interactions
         g.addEventListener('mousedown', (e) => {
           if (e.button !== 0) return;
           e.stopPropagation();
+          e.preventDefault();
           const containerRect = svg.getBoundingClientRect();
           const mouseSvgX = (e.clientX - containerRect.left - treePanX) / treeScale;
           const mouseSvgY = (e.clientY - containerRect.top - treePanY) / treeScale;
           draggedNode = node;
+          dragStartClientX = e.clientX;
+          dragStartClientY = e.clientY;
+          dragHasMoved = false;
           dragNodeOffsetX = mouseSvgX - node.x;
           dragNodeOffsetY = mouseSvgY - node.y;
         });
@@ -2111,14 +2301,16 @@ passo 1:
         // Double click to collapse/expand rule subtrees
         g.addEventListener('dblclick', (e) => {
           e.stopPropagation();
+          if (isRunning) return;
           if (!node.isToken && node.children && node.children.length > 0) {
             node.collapsed = !node.collapsed;
-            renderTreeSVG(rootNode, false);
+            renderTreeSVG(rootNode, false, false);
           }
         });
 
         // Hover Tooltip & Edge Highlight
-        g.addEventListener('mouseenter', (e) => {
+        g.addEventListener('mouseenter', () => {
+          if (draggedNode) return;
           if (node.line) highlightLine(node.line);
           edgeList.forEach(ed => {
             if (ed.parent === node || ed.child === node) {
@@ -2138,11 +2330,12 @@ passo 1:
         });
 
         g.addEventListener('mousemove', (e) => {
+          if (draggedNode) return;
           const tooltip = document.getElementById('tree-tooltip');
           const container = document.getElementById('tree-svg-container');
           if (tooltip && container) {
             const cRect = container.getBoundingClientRect();
-            tooltip.style.left = `${Math.min(e.clientX - cRect.left + 14, cRect.width - 260)}px`;
+            tooltip.style.left = `${Math.min(e.clientX - cRect.left + 14, Math.max(cRect.width - 280, 10))}px`;
             tooltip.style.top = `${Math.max(e.clientY - cRect.top - 36, 10)}px`;
           }
         });
@@ -2166,11 +2359,11 @@ passo 1:
       }
 
       svg._updateEdges = updateAllEdges;
-      buildElements(rootNode);
+      buildElements(rootNode, null);
       updateAllEdges();
 
       if (autoFit) {
-        setTimeout(() => fitTreeToScreen(), 20);
+        fitTreeToScreen();
       } else {
         updateViewportTransform();
       }
@@ -2184,6 +2377,8 @@ passo 1:
 
       container.addEventListener('mousedown', (e) => {
         if (e.button !== 0 || draggedNode) return;
+        if (e.target.closest && e.target.closest('.tree-floating-toolbar')) return;
+        e.preventDefault();
         isPanningTree = true;
         container.classList.add('grabbing');
         panStartX = e.clientX - treePanX;
@@ -2192,6 +2387,13 @@ passo 1:
 
       window.addEventListener('mousemove', (e) => {
         if (draggedNode) {
+          const dist = Math.hypot(e.clientX - dragStartClientX, e.clientY - dragStartClientY);
+          if (!dragHasMoved && dist < 4) return;
+          dragHasMoved = true;
+
+          const tooltip = document.getElementById('tree-tooltip');
+          if (tooltip) tooltip.style.display = 'none';
+
           const containerRect = svg.getBoundingClientRect();
           const mouseSvgX = (e.clientX - containerRect.left - treePanX) / treeScale;
           const mouseSvgY = (e.clientY - containerRect.top - treePanY) / treeScale;
@@ -2214,6 +2416,7 @@ passo 1:
 
       window.addEventListener('mouseup', () => {
         draggedNode = null;
+        dragHasMoved = false;
         if (isPanningTree) {
           isPanningTree = false;
           container.classList.remove('grabbing');
@@ -2221,6 +2424,7 @@ passo 1:
       });
 
       container.addEventListener('wheel', (e) => {
+        if (e.target.closest && e.target.closest('.tree-floating-toolbar')) return;
         e.preventDefault();
         const rect = container.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
