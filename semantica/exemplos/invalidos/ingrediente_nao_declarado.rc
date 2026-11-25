@@ -1,0 +1,10 @@
+# Erro semantico: ingrediente 'chocolate' usado sem ter sido declarado
+receita "Bolo simples";
+porcoes 6;
+
+ingrediente farinha 400 g;
+ingrediente agua 250 ml;
+
+passo 1:
+  misture farinha, chocolate;
+  asse por 35 min a 180 graus;

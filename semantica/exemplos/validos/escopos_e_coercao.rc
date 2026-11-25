@@ -1,0 +1,22 @@
+# Demonstra coercao sem perda (inteiro -> real) e sombreamento entre escopos
+receita "Brioche amanteigado";
+porcoes 6;
+
+ingrediente farinha 500 g;
+ingrediente manteiga 125.5 g;
+ingrediente leite 200 ml;
+
+# Coercao automatica: farinha (inteiro) + manteiga (real) -> real
+massa_base = farinha + manteiga;
+tempo_descanso = 30;
+
+passo 1:
+  # Sombreamento (shadowing): variavel local 'tempo_descanso' no escopo do passo 1
+  tempo_descanso = 45.5;
+  misture farinha, manteiga, leite;
+  descanse por tempo_descanso min;
+
+passo 2:
+  # Fora do passo 1, volta a valer 'tempo_descanso' global (inteiro = 30)
+  asse por tempo_descanso min a 180 graus;
+  sirva;

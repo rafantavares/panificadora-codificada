@@ -1,0 +1,10 @@
+# Erro semantico: soma de ingredientes com dimensoes fisicas incompativeis (massa + volume)
+receita "Soma de unidades incompativeis";
+porcoes 4;
+
+ingrediente farinha 500 g;
+ingrediente agua 300 ml;
+mistura = farinha + agua;
+
+passo 1:
+  misture farinha, agua;

@@ -1,0 +1,13 @@
+# Tres erros semanticos distintos detectados na mesma execucao:
+# 1. Ingrediente 'farinha' declarado duas vezes (linha 8)
+# 2. Variavel 'fermento_extra' nao declarada em expressao (linha 9)
+# 3. Ingrediente 'canela' nao declarado usado em acao (linha 12)
+receita "Multiplos erros semanticos";
+porcoes 4;
+
+ingrediente farinha 500 g;
+ingrediente farinha 300 g;
+total = farinha + fermento_extra;
+
+passo 1:
+  adicione canela;

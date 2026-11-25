@@ -1,0 +1,10 @@
+# Erro semantico (Aula 14, slide 20): ingrediente 'farinha' declarado duas vezes no mesmo escopo
+receita "Pao duplicado";
+porcoes 4;
+
+ingrediente farinha 500 g;
+ingrediente agua 300 ml;
+ingrediente farinha 200 g;
+
+passo 1:
+  misture farinha, agua;

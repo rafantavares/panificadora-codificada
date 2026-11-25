@@ -788,6 +788,7 @@
     <div class="badges">
       <div class="badge badge-green"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> E2: Léxico OK</div>
       <div class="badge badge-green"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> E3: Sintático &amp; Árvore OK</div>
+      <div class="badge badge-green"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> E4/E5: AST &amp; Semântico OK</div>
       <div class="badge">ANTLR 4.13.2</div>
       <div class="badge">Python 3</div>
     </div>
@@ -822,6 +823,7 @@
                 <option value="ola">Pão Simples (ola.rc)</option>
                 <option value="cenoura">Bolo de Cenoura (bolo_cenoura.rc)</option>
                 <option value="forma">Pão de Forma com Expressões (pao_forma.rc)</option>
+                <option value="escopos">Brioche — Coerção e Escopos (escopos_e_coercao.rc)</option>
               </optgroup>
               <optgroup label="Erros Léxicos (E2)">
                 <option value="err_lex_char">[Erro] Caractere Inválido (@)</option>
@@ -834,6 +836,15 @@
                 <option value="err_sin_paren">[Erro] Parênteses desbalanceados</option>
                 <option value="err_sin_fora">[Erro] Comando fora de passo</option>
                 <option value="err_sin_unidade">[Erro] Ingrediente sem unidade</option>
+              </optgroup>
+              <optgroup label="Erros Semânticos (E4 / E5)">
+                <option value="err_sem_nao_decl">[Erro] Ingrediente não declarado (chocolate)</option>
+                <option value="err_sem_var_expr">[Erro] Variável não declarada em expressão (taxa)</option>
+                <option value="err_sem_duplicado">[Erro] Ingrediente declarado duas vezes (farinha)</option>
+                <option value="err_sem_escopo">[Erro] Variável local invisível fora do passo</option>
+                <option value="err_sem_tipos">[Erro] Tipos incompatíveis (real -> inteiro)</option>
+                <option value="err_sem_unidades">[Erro] Unidades incompatíveis (massa + volume)</option>
+                <option value="err_sem_div_zero">[Erro] Divisão por zero (500 / 0)</option>
               </optgroup>
             </select>
           </div>
@@ -880,19 +891,22 @@
           </div>
         </div>
 
-        <!-- COL 3: ÁRVORE SINTÁTICA (SINTÁTICO) -->
+        <!-- COL 3: ÁRVORE SINTÁTICA, AST & TABELA DE SÍMBOLOS -->
         <div class="sim-card" id="tree-card">
           <div class="card-header">
-            <div class="card-title"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M12 7.5V12m0 0l-6 4.5M12 12l6 4.5"/></svg> Árvore Sintática (Parse Tree)</div>
-            <div style="display: flex; gap: 0.35rem; align-items: center;">
-              <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('svg')">Visual SVG</button>
-              <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('text')">Texto Indentado</button>
-              <button id="btn-fullscreen-tree" class="btn btn-primary" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="toggleTreeFullscreen()"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Tela Cheia</button>
+            <div class="card-title" id="tree-card-title"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M12 7.5V12m0 0l-6 4.5M12 12l6 4.5"/></svg> Parse Tree / AST &amp; Semântico</div>
+            <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+              <button id="btn-mode-parse" class="btn btn-primary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('svg')">Parse Tree (E3)</button>
+              <button id="btn-mode-ast" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('ast')">AST Anotada (E4)</button>
+              <button id="btn-mode-symbols" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('symbols')">Tabela de Símbolos</button>
+              <button id="btn-mode-text" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('text')">Texto Indentado</button>
+              <button id="btn-fullscreen-tree" class="btn" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="toggleTreeFullscreen()"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Tela Cheia</button>
             </div>
           </div>
           <div class="card-body">
             <div id="tree-svg-container" class="tree-container">
               <svg id="parse-tree-svg" class="parse-tree"></svg>
+              <div id="tree-reduction-pill" style="display:none; position:absolute; top:10px; right:12px; background:rgba(15,23,42,0.92); border:1px solid #38bdf8; color:#e2e8f0; padding:0.28rem 0.65rem; border-radius:999px; font-size:0.74rem; font-weight:600; z-index:15; pointer-events:none;"></div>
               <div class="tree-help-hint">Arraste o fundo para mover · Scroll para Zoom · Arraste os nós · Duplo-clique num nó para recolher/expandir</div>
               <div id="tree-tooltip" class="tree-tooltip"></div>
               <div class="tree-floating-toolbar" onmousedown="event.stopPropagation()" ondblclick="event.stopPropagation()">
@@ -902,6 +916,8 @@
                 <button type="button" class="btn" title="Ajustar árvore à tela" onclick="fitTreeToScreen()"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/></svg> Ajustar</button>
                 <button type="button" id="btn-reset-nodes" class="btn" title="Resetar posições dos nós e expandir subárvores" onclick="resetTreeNodes(event)"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Resetar Nós</button>
               </div>
+            </div>
+            <div id="tree-symbols-container" class="tree-container" style="display: none; padding: 1rem; overflow: auto;">
             </div>
             <div id="tree-text-container" class="tree-container" style="display: none; padding: 1rem; font-family: var(--font-code); font-size: 0.82rem; color: #38bdf8; white-space: pre; overflow: auto; cursor: text;">
             </div>
@@ -1279,8 +1295,16 @@ passo 1:</div>
         <div class="timeline-item">
           <div class="timeline-dot"></div>
           <div class="timeline-content">
-            <div class="timeline-date">14/10 — Implementação da Etapa E3 (Parser & Árvore Sintática)</div>
-            <p style="color: #cbd5e1; font-size: 0.9rem;">Substituímos o stub provisório pela gramática sintática completa em <code>sintatica/</code>, com precedência de operadores e geração automatizada da Árvore Sintática (CST/AST) para todas as receitas.</p>
+            <div class="timeline-date">14/10 — Implementação da Etapa E3 (Parser &amp; Árvore Sintática)</div>
+            <p style="color: #cbd5e1; font-size: 0.9rem;">Substituímos o stub provisório pela gramática sintática completa em <code>sintatica/</code>, com precedência de operadores, recuperação em Modo Pânico (<code>SINCRONIZA = { ';', 'passo N', EOF }</code>) e geração da Árvore de Parse.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-date">25/11 — Etapa Final E4 / E5 (AST via Visitor, Pilha de Escopos &amp; Tipos)</div>
+            <p style="color: #cbd5e1; font-size: 0.9rem;">Implementamos em <code>semantica/</code> o <code>ConstrutorAST(ReceitaVisitor)</code> que poda pontuação e nós intermediários de repasse (redução estrutural de ~69% dos nós), a <code>PilhaTabelas</code> com escopo global e escopos locais por passo (permitindo sombreamento), e o <code>AnalisadorSemantico</code> com inferência de tipos sintetizados (<code>inteiro</code>, <code>real</code>, <code>texto</code>), coerção sem perda (<code>inteiro -&gt; real</code>) e validação dimensional de unidades culinárias.</p>
           </div>
         </div>
       </div>
@@ -1389,7 +1413,103 @@ passo 1:
 porcoes 4;
 ingrediente farinha 500;
 passo 1:
-  sirva;`
+  sirva;`,
+
+      escopos: `# Coercao sem perda (inteiro -> real) e sombreamento entre escopos
+receita "Brioche amanteigado";
+porcoes 6;
+
+ingrediente farinha 500 g;
+ingrediente manteiga 125.5 g;
+ingrediente leite 200 ml;
+
+massa_base = farinha + manteiga;
+tempo_descanso = 30;
+
+passo 1:
+  tempo_descanso = 45.5;
+  misture farinha, manteiga, leite;
+  descanse por tempo_descanso min;
+
+passo 2:
+  asse por tempo_descanso min a 180 graus;
+  sirva;`,
+
+      err_sem_nao_decl: `# Erro semantico: ingrediente 'chocolate' usado sem declarar
+receita "Bolo simples";
+porcoes 6;
+
+ingrediente farinha 400 g;
+ingrediente agua 250 ml;
+
+passo 1:
+  misture farinha, chocolate;
+  asse por 35 min a 180 graus;`,
+
+      err_sem_var_expr: `# Erro semantico (Aula 14): variavel 'taxa' usada em expressao sem declarar
+receita "Pao caseiro";
+porcoes 4;
+
+ingrediente farinha 500 g;
+total = farinha + taxa;
+
+passo 1:
+  misture farinha;`,
+
+      err_sem_duplicado: `# Erro semantico (Aula 14): ingrediente 'farinha' declarado duas vezes
+receita "Pao duplicado";
+porcoes 4;
+
+ingrediente farinha 500 g;
+ingrediente agua 300 ml;
+ingrediente farinha 200 g;
+
+passo 1:
+  misture farinha, agua;`,
+
+      err_sem_escopo: `# Erro semantico: variavel local do passo 1 nao existe no passo 2
+receita "Teste de escopo local";
+porcoes 4;
+
+ingrediente farinha 500 g;
+
+passo 1:
+  tempo_local = 15;
+  amasse por tempo_local min;
+
+passo 2:
+  asse por tempo_local min a 180 graus;`,
+
+      err_sem_tipos: `# Erro semantico (Resumao G2): atribuir 'real' a 'inteiro' perde precisao
+receita "Teste de coercao invalida";
+porcoes 4;
+
+ingrediente farinha 500 g;
+lotes = 2;
+lotes = 2.5;
+
+passo 1:
+  misture farinha;`,
+
+      err_sem_unidades: `# Erro semantico: soma de dimensoes fisicas incompativeis (massa + volume)
+receita "Soma de unidades incompativeis";
+porcoes 4;
+
+ingrediente farinha 500 g;
+ingrediente agua 300 ml;
+mistura = farinha + agua;
+
+passo 1:
+  misture farinha, agua;`,
+
+      err_sem_div_zero: `# Erro semantico: divisao por zero na expressao de quantidade
+receita "Divisao por zero";
+porcoes 4;
+
+ingrediente farinha 500 / 0 g;
+
+passo 1:
+  misture farinha;`
     };
 
     // TAB SWITCHING
@@ -1741,7 +1861,9 @@ passo 1:
         while (check('PREPOSICAO')) {
           const mod = { name: 'modificador', children: [] };
           mod.children.push(match('PREPOSICAO'));
-          if (check('NUMERO') || check('ABREPAR')) {
+          const nextType = tokens[pos + 1]?.type;
+          const isExprIdent = check('IDENT') && (nextType === 'TEMPO' || nextType === 'TEMPERATURA' || ['MAIS', 'MENOS', 'VEZES', 'DIV'].includes(nextType));
+          if (check('NUMERO') || check('ABREPAR') || isExprIdent) {
             mod.children.push(expr());
             if (check('TEMPO') || check('TEMPERATURA')) {
               mod.children.push(match(current().type));
@@ -1815,7 +1937,530 @@ passo 1:
     let currentTokens = [];
     let currentErrors = [];
     let currentParseErrors = [];
+    let currentSemanticErrors = [];
     let currentTree = null;
+    let currentAstTree = null;
+    let currentSymbolTable = [];
+    let currentTreeViewMode = 'svg'; // 'svg' | 'ast' | 'symbols' | 'text'
+
+    const DIMENSAO_UNIDADE = {
+      g: 'massa', kg: 'massa',
+      ml: 'volume', l: 'volume',
+      xicara: 'medida', colher: 'medida', pitada: 'medida',
+      un: 'contagem'
+    };
+
+    const UTENSILIOS_CULINARIOS = new Set([
+      'forma', 'assadeira', 'panela', 'tigela', 'vasilha',
+      'tabuleiro', 'frigideira', 'forno', 'liquidificador', 'batedeira'
+    ]);
+
+    function countTreeNodesTotal(node) {
+      if (!node) return 0;
+      let total = 1;
+      (node.children || []).forEach(c => { total += countTreeNodesTotal(c); });
+      return total;
+    }
+
+    // BUILD AST & RUN SEMANTIC / TYPE CHECKING (E4 / E5)
+    function analyzeASTAndSemantics(parseTree) {
+      const semanticErrors = [];
+      const scopeStack = [{}];
+      const scopeNames = ['global'];
+      const symbolHistory = [];
+
+      function pushScope(name) {
+        scopeStack.push({});
+        scopeNames.push(name);
+      }
+      function popScope() {
+        if (scopeStack.length > 1) {
+          scopeStack.pop();
+          scopeNames.pop();
+        }
+      }
+      function currentScopeName() {
+        return scopeNames[scopeNames.length - 1];
+      }
+      function lookupTop(name) {
+        return scopeStack[scopeStack.length - 1][name] || null;
+      }
+      function lookup(name) {
+        for (let i = scopeStack.length - 1; i >= 0; i--) {
+          if (scopeStack[i][name]) return scopeStack[i][name];
+        }
+        return null;
+      }
+      function declareSymbol(sym) {
+        scopeStack[scopeStack.length - 1][sym.nome] = sym;
+        symbolHistory.push(sym);
+      }
+
+      function buildExprAST(exprNode) {
+        if (!exprNode) return null;
+        if (exprNode.name === 'expr_paren') {
+          return buildExprAST(exprNode.children[0]);
+        }
+        if (exprNode.children && exprNode.children.length === 1) {
+          const leaf = exprNode.children[0];
+          if (leaf.name === 'NUMERO') {
+            const isReal = leaf.text.includes('.');
+            const tipo = isReal ? 'real' : 'inteiro';
+            return {
+              name: `Num(${leaf.text})`,
+              text: `${leaf.text} : ${tipo}`,
+              isToken: true,
+              isAstNode: true,
+              astClass: 'Num',
+              valor: isReal ? parseFloat(leaf.text) : parseInt(leaf.text, 10),
+              tipo_inferido: tipo,
+              dimensao: null,
+              line: leaf.line,
+              children: []
+            };
+          }
+          if (leaf.name === 'IDENT') {
+            const sym = lookup(leaf.text);
+            let tipo = 'erro';
+            let dim = null;
+            if (!sym) {
+              semanticErrors.push({
+                line: leaf.line || 1,
+                col: 1,
+                msg: `Variável ou ingrediente '${leaf.text}' usado em expressão sem ter sido declarado`
+              });
+            } else {
+              tipo = sym.tipo;
+              dim = sym.dimensao;
+            }
+            return {
+              name: `Var(${leaf.text})`,
+              text: `${leaf.text} : ${tipo}`,
+              isToken: true,
+              isAstNode: true,
+              astClass: 'Var',
+              tipo_inferido: tipo,
+              dimensao: dim,
+              line: leaf.line,
+              children: []
+            };
+          }
+        }
+        if (exprNode.children && exprNode.children.length === 3) {
+          const esq = buildExprAST(exprNode.children[0]);
+          const opTok = exprNode.children[1];
+          const dir = buildExprAST(exprNode.children[2]);
+          const op = opTok.text;
+          let tipo = 'inteiro';
+          let coercao = null;
+          let dim = (esq && esq.dimensao) || (dir && dir.dimensao) || null;
+
+          if (!esq || !dir || esq.tipo_inferido === 'erro' || dir.tipo_inferido === 'erro') {
+            tipo = 'erro';
+          } else {
+            if ((op === '+' || op === '-') && esq.dimensao && dir.dimensao && esq.dimensao !== dir.dimensao) {
+              semanticErrors.push({
+                line: opTok.line || 1,
+                col: 1,
+                msg: `Tipos incompatíveis em '${op}': não é possível combinar dimensão '${esq.dimensao}' com '${dir.dimensao}'`
+              });
+              tipo = 'erro';
+            } else if (op === '/' && dir.astClass === 'Num' && dir.valor === 0) {
+              semanticErrors.push({
+                line: opTok.line || 1,
+                col: 1,
+                msg: `Divisão por zero não permitida na expressão`
+              });
+              tipo = 'erro';
+            } else if (esq.tipo_inferido === 'real' || dir.tipo_inferido === 'real' || op === '/') {
+              tipo = 'real';
+              if (esq.tipo_inferido !== dir.tipo_inferido || (op === '/' && esq.tipo_inferido === 'inteiro' && dir.tipo_inferido === 'inteiro')) {
+                coercao = 'inteiro -> real';
+              }
+            }
+          }
+          return {
+            name: `Op('${op}') [${tipo}]`,
+            astClass: 'Op',
+            isAstNode: true,
+            tipo_inferido: tipo,
+            coercao,
+            dimensao: dim,
+            line: opTok.line,
+            children: [esq, dir].filter(Boolean)
+          };
+        }
+        return null;
+      }
+
+      const astRoot = { name: 'Programa', astClass: 'Programa', isAstNode: true, line: 1, children: [] };
+
+      (parseTree.children || []).forEach(child => {
+        if (!child) return;
+        if (child.name === 'declaracao_receita') {
+          const tok = child.children.find(c => c && c.name === 'TEXTO');
+          if (tok) {
+            astRoot.children.push({
+              name: `Receita(${tok.text})`,
+              text: `Receita(${tok.text})`,
+              isToken: true,
+              isAstNode: true,
+              astClass: 'Receita',
+              tipo_inferido: 'texto',
+              line: tok.line,
+              children: []
+            });
+          }
+        } else if (child.name === 'declaracao_porcoes') {
+          const tok = child.children.find(c => c && c.name === 'NUMERO');
+          if (tok) {
+            const isReal = tok.text.includes('.');
+            const tipo = isReal ? 'real' : 'inteiro';
+            if (isReal) {
+              semanticErrors.push({
+                line: tok.line || 1,
+                col: 1,
+                msg: `Tipos incompatíveis em 'porcoes': esperado 'inteiro', encontrou 'real'`
+              });
+            }
+            astRoot.children.push({
+              name: `Porcoes(${tok.text})`,
+              text: `Porcoes(${tok.text})`,
+              isToken: true,
+              isAstNode: true,
+              astClass: 'Porcoes',
+              tipo_inferido: tipo,
+              line: tok.line,
+              children: []
+            });
+          }
+        } else if (child.name === 'declaracao_ingrediente') {
+          const idTok = child.children.find(c => c && c.name === 'IDENT');
+          const unTok = child.children.find(c => c && c.name === 'UNIDADE');
+          const exprChild = child.children.find(c => c && c.name.startsWith('expr'));
+          const qtdAst = buildExprAST(exprChild);
+          if (idTok && unTok) {
+            const existing = lookupTop(idTok.text);
+            if (existing) {
+              semanticErrors.push({
+                line: idTok.line || 1,
+                col: 1,
+                msg: `Ingrediente '${idTok.text}' declarado duas vezes no mesmo escopo (já declarado na linha ${existing.linha})`
+              });
+            } else {
+              const tipo = (qtdAst && qtdAst.tipo_inferido !== 'erro') ? qtdAst.tipo_inferido : 'real';
+              declareSymbol({
+                escopo: currentScopeName(),
+                nome: idTok.text,
+                categoria: 'ingrediente',
+                tipo,
+                unidade: unTok.text,
+                dimensao: DIMENSAO_UNIDADE[unTok.text] || null,
+                linha: idTok.line || 1
+              });
+            }
+            astRoot.children.push({
+              name: `Declara(${idTok.text}, ${unTok.text})`,
+              astClass: 'Declara',
+              isAstNode: true,
+              tipo_inferido: qtdAst ? qtdAst.tipo_inferido : 'real',
+              line: idTok.line,
+              children: qtdAst ? [qtdAst] : []
+            });
+          }
+        } else if (child.name === 'atribuicao') {
+          const idTok = child.children.find(c => c && c.name === 'IDENT');
+          const exprChild = child.children.find(c => c && c.name.startsWith('expr'));
+          const valAst = buildExprAST(exprChild);
+          if (idTok && valAst) {
+            const existing = lookupTop(idTok.text);
+            let coercao = null;
+            if (existing) {
+              if (valAst.tipo_inferido !== 'erro' && existing.tipo === 'inteiro' && valAst.tipo_inferido === 'real') {
+                semanticErrors.push({
+                  line: idTok.line || 1,
+                  col: 1,
+                  msg: `Tipos incompatíveis na atribuição a '${idTok.text}': não é possível atribuir 'real' a 'inteiro' sem perda de precisão`
+                });
+              } else if (existing.tipo === 'real' && valAst.tipo_inferido === 'inteiro') {
+                coercao = 'inteiro -> real';
+              }
+            } else {
+              declareSymbol({
+                escopo: currentScopeName(),
+                nome: idTok.text,
+                categoria: 'variavel',
+                tipo: valAst.tipo_inferido !== 'erro' ? valAst.tipo_inferido : 'real',
+                unidade: '-',
+                dimensao: valAst.dimensao || null,
+                linha: idTok.line || 1
+              });
+            }
+            astRoot.children.push({
+              name: `Atribui(${idTok.text}) [${valAst.tipo_inferido}]`,
+              astClass: 'Atribui',
+              isAstNode: true,
+              tipo_inferido: valAst.tipo_inferido,
+              coercao,
+              line: idTok.line,
+              children: [valAst]
+            });
+          }
+        } else if (child.name === 'bloco_passo') {
+          const passoTok = child.children.find(c => c && c.name === 'PASSO');
+          const passoLabel = passoTok ? passoTok.text : 'passo';
+          pushScope(passoLabel);
+          const passoNode = {
+            name: `Passo(${passoLabel.replace('passo', '').trim()})`,
+            astClass: 'Passo',
+            isAstNode: true,
+            line: passoTok?.line || 1,
+            children: []
+          };
+
+          (child.children || []).forEach(cmd => {
+            if (!cmd) return;
+            if (cmd.name === 'atribuicao') {
+              const idTok = cmd.children.find(c => c && c.name === 'IDENT');
+              const exprChild = cmd.children.find(c => c && c.name.startsWith('expr'));
+              const valAst = buildExprAST(exprChild);
+              if (idTok && valAst) {
+                const existingTop = lookupTop(idTok.text);
+                if (existingTop) {
+                  if (valAst.tipo_inferido !== 'erro' && existingTop.tipo === 'inteiro' && valAst.tipo_inferido === 'real') {
+                    semanticErrors.push({
+                      line: idTok.line || 1,
+                      col: 1,
+                      msg: `Tipos incompatíveis na atribuição a '${idTok.text}': não é possível atribuir 'real' a 'inteiro' sem perda de precisão`
+                    });
+                  }
+                } else {
+                  declareSymbol({
+                    escopo: currentScopeName(),
+                    nome: idTok.text,
+                    categoria: 'variavel',
+                    tipo: valAst.tipo_inferido !== 'erro' ? valAst.tipo_inferido : 'real',
+                    unidade: '-',
+                    dimensao: valAst.dimensao || null,
+                    linha: idTok.line || 1
+                  });
+                }
+                passoNode.children.push({
+                  name: `Atribui(${idTok.text}) [${valAst.tipo_inferido}]`,
+                  astClass: 'Atribui',
+                  isAstNode: true,
+                  tipo_inferido: valAst.tipo_inferido,
+                  line: idTok.line,
+                  children: [valAst]
+                });
+              }
+            } else if (cmd.name === 'comando_acao') {
+              const acaoTok = cmd.children.find(c => c && c.name === 'ACAO');
+              const verbo = acaoTok ? acaoTok.text : 'acao';
+              const acaoAst = {
+                name: `Acao(${verbo})`,
+                astClass: 'Acao',
+                isAstNode: true,
+                line: acaoTok?.line || 1,
+                children: []
+              };
+
+              const listaArgs = cmd.children.find(c => c && c.name === 'lista_argumentos');
+              if (listaArgs) {
+                (listaArgs.children || []).forEach(arg => {
+                  if (!arg || arg.name === 'VIRGULA') return;
+                  if (arg.name === 'IDENT') {
+                    let tipo = 'utensilio';
+                    if (!(verbo === 'unte' && UTENSILIOS_CULINARIOS.has(arg.text))) {
+                      const sym = lookup(arg.text);
+                      if (!sym) {
+                        semanticErrors.push({
+                          line: arg.line || 1,
+                          col: 1,
+                          msg: `Ingrediente '${arg.text}' usado em '${verbo}' sem ter sido declarado`
+                        });
+                        tipo = 'erro';
+                      } else {
+                        tipo = sym.tipo;
+                      }
+                    }
+                    acaoAst.children.push({
+                      name: `Var(${arg.text})`,
+                      text: `${arg.text} : ${tipo}`,
+                      isToken: true,
+                      isAstNode: true,
+                      astClass: 'Var',
+                      tipo_inferido: tipo,
+                      line: arg.line,
+                      children: []
+                    });
+                  } else if (arg.name === 'TEXTO') {
+                    acaoAst.children.push({
+                      name: `Texto(${arg.text})`,
+                      text: arg.text,
+                      isToken: true,
+                      isAstNode: true,
+                      astClass: 'Texto',
+                      tipo_inferido: 'texto',
+                      line: arg.line,
+                      children: []
+                    });
+                  }
+                });
+              }
+
+              (cmd.children || []).filter(c => c && c.name === 'modificador').forEach(mod => {
+                const prepTok = mod.children.find(c => c && c.name === 'PREPOSICAO');
+                const prep = prepTok ? prepTok.text : '';
+                const exprChild = mod.children.find(c => c && c.name.startsWith('expr'));
+                const medTok = mod.children.find(c => c && (c.name === 'TEMPO' || c.name === 'TEMPERATURA'));
+                const idChild = mod.children.find(c => c && c.name === 'IDENT');
+                const txtChild = mod.children.find(c => c && c.name === 'TEXTO');
+
+                if (exprChild) {
+                  const valAst = buildExprAST(exprChild);
+                  acaoAst.children.push({
+                    name: `Mod(${prep}${medTok ? ' ' + medTok.text : ''})`,
+                    astClass: 'Modificador',
+                    isAstNode: true,
+                    tipo_inferido: valAst ? valAst.tipo_inferido : null,
+                    line: prepTok?.line || 1,
+                    children: valAst ? [valAst] : []
+                  });
+                } else if (idChild) {
+                  let tipo = 'utensilio';
+                  if (!(prep === 'em' && UTENSILIOS_CULINARIOS.has(idChild.text))) {
+                    const sym = lookup(idChild.text);
+                    if (!sym) {
+                      semanticErrors.push({
+                        line: idChild.line || 1,
+                        col: 1,
+                        msg: `Ingrediente '${idChild.text}' usado após '${prep}' sem ter sido declarado`
+                      });
+                      tipo = 'erro';
+                    } else {
+                      tipo = sym.tipo;
+                    }
+                  }
+                  acaoAst.children.push({
+                    name: `Mod(${prep} ${idChild.text})`,
+                    text: `${prep} ${idChild.text}`,
+                    isToken: true,
+                    isAstNode: true,
+                    astClass: 'Modificador',
+                    tipo_inferido: tipo,
+                    line: idChild.line,
+                    children: []
+                  });
+                } else if (txtChild) {
+                  acaoAst.children.push({
+                    name: `Mod(${prep} ${txtChild.text})`,
+                    text: `${prep} ${txtChild.text}`,
+                    isToken: true,
+                    isAstNode: true,
+                    astClass: 'Modificador',
+                    tipo_inferido: 'texto',
+                    line: txtChild.line,
+                    children: []
+                  });
+                }
+              });
+
+              passoNode.children.push(acaoAst);
+            }
+          });
+
+          popScope();
+          astRoot.children.push(passoNode);
+        }
+      });
+
+      return { astRoot, semanticErrors, symbolHistory };
+    }
+
+    function renderSymbolTableHTML() {
+      const container = document.getElementById('tree-symbols-container');
+      if (!container) return;
+      if (!currentTree) {
+        container.innerHTML = '<div style="color:#64748b; text-align:center; margin-top:3rem;">Execute <b>Animar</b> ou <b>Instantâneo</b> para gerar a AST e a Tabela de Símbolos.</div>';
+        return;
+      }
+      const parseCount = countTreeNodesTotal(currentTree);
+      const astCount = countTreeNodesTotal(currentAstTree);
+      const reduction = parseCount > 0 ? (((parseCount - astCount) / parseCount) * 100).toFixed(1) : '0.0';
+
+      let rowsHtml = '';
+      if (currentSymbolTable.length === 0) {
+        rowsHtml = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhum símbolo declarado.</td></tr>';
+      } else {
+        rowsHtml = currentSymbolTable.map(s => `
+          <tr>
+            <td><span class="badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">${escapeHtml(s.escopo)}</span></td>
+            <td><code style="color:#f8fafc; font-weight:700;">${escapeHtml(s.nome)}</code></td>
+            <td>${escapeHtml(s.categoria)}</td>
+            <td><span class="badge" style="background:rgba(52,211,153,0.15); color:#34d399;">${escapeHtml(s.tipo)}</span></td>
+            <td>${escapeHtml(s.unidade || '-')}</td>
+            <td>L${s.linha}</td>
+          </tr>
+        `).join('');
+      }
+
+      let semHtml = '';
+      if (currentSemanticErrors.length > 0) {
+        semHtml = `<div style="margin-top:1rem; padding:0.75rem 1rem; border-radius:8px; background:rgba(239,68,68,0.15); border:1px solid var(--error); color:#fca5a5; font-size:0.84rem;">
+          <strong>Erros Semânticos Detectados (${currentSemanticErrors.length}):</strong>
+          <ul style="margin:0.4rem 0 0 1.2rem;">
+            ${currentSemanticErrors.map(e => `<li>Linha ${e.line}: ${escapeHtml(e.msg)}</li>`).join('')}
+          </ul>
+        </div>`;
+      } else if (!currentParseErrors || currentParseErrors.length === 0) {
+        semHtml = `<div style="margin-top:1rem; padding:0.75rem 1rem; border-radius:8px; background:rgba(16,185,129,0.12); border:1px solid var(--success); color:#6ee7b7; font-size:0.84rem;">
+          <strong>Verificação Semântica e de Tipos (E4/E5):</strong> Todas as declarações, escopos, tipos (<code>inteiro</code>, <code>real</code>, <code>texto</code>) e dimensões físicas estão válidos.
+        </div>`;
+      }
+
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.85rem; padding:0.65rem 0.9rem; background:#0d1322; border:1px solid var(--card-border); border-radius:8px;">
+          <div style="font-size:0.84rem; color:#cbd5e1;"><strong>Redução Estrutural (Aula 14):</strong> Árvore de Parse = <b>${parseCount} nós</b> &rarr; AST = <b>${astCount} nós</b></div>
+          <span class="badge badge-green">-${reduction}% nós de andaime/pontuação</span>
+        </div>
+        <table class="spec-table" style="margin:0; font-size:0.82rem;">
+          <thead>
+            <tr>
+              <th>Escopo (Pilha)</th>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th>Tipo Inferido</th>
+              <th>Unidade</th>
+              <th>Linha</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${semHtml}
+      `;
+    }
+
+    function updateReductionPill() {
+      const pill = document.getElementById('tree-reduction-pill');
+      if (!pill) return;
+      if (!currentTree || !currentAstTree) {
+        pill.style.display = 'none';
+        return;
+      }
+      const pCount = countTreeNodesTotal(currentTree);
+      const aCount = countTreeNodesTotal(currentAstTree);
+      const red = pCount > 0 ? (((pCount - aCount) / pCount) * 100).toFixed(1) : '0.0';
+      if (currentTreeViewMode === 'ast') {
+        pill.style.display = 'block';
+        pill.innerHTML = `AST Anotada: ${aCount} nós (redução de -${red}% vs Parse Tree com ${pCount} nós)`;
+      } else if (currentTreeViewMode === 'svg') {
+        pill.style.display = 'block';
+        pill.innerHTML = `Parse Tree (E3): ${pCount} nós · Clique em "AST Anotada (E4)" para ver a poda (-${red}%)`;
+      } else {
+        pill.style.display = 'none';
+      }
+    }
 
     const UI_ICONS = {
       play: '<svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
@@ -1840,6 +2485,9 @@ passo 1:
         activeTreeNodeEl = null;
       }
       currentTree = null;
+      currentAstTree = null;
+      currentSemanticErrors = [];
+      currentSymbolTable = [];
       draggedNode = null;
       isPanningTree = false;
       document.getElementById('btn-play').innerHTML = `${UI_ICONS.play} Animar`;
@@ -1848,9 +2496,11 @@ passo 1:
       document.getElementById('lexical-status').className = 'status-banner';
       document.getElementById('lexical-status').innerHTML = '<span>Pronto para executar.</span>';
       document.getElementById('syntactic-status').className = 'status-banner';
-      document.getElementById('syntactic-status').innerHTML = '<span>Aguardando análise sintática...</span>';
+      document.getElementById('syntactic-status').innerHTML = '<span>Aguardando análise sintática e semântica...</span>';
       document.getElementById('parse-tree-svg').innerHTML = '';
       document.getElementById('tree-text-container').innerText = '';
+      renderSymbolTableHTML();
+      updateReductionPill();
       highlightLine(0);
     }
 
@@ -1947,9 +2597,17 @@ passo 1:
       currentTree = parseResult.tree;
       currentParseErrors = parseResult.errors;
 
+      const semResult = analyzeASTAndSemantics(currentTree);
+      currentAstTree = semResult.astRoot;
+      currentSemanticErrors = semResult.semanticErrors;
+      currentSymbolTable = semResult.symbolHistory;
+
       renderTreeText(currentTree);
+      renderSymbolTableHTML();
+      updateReductionPill();
+      const targetRoot = currentTreeViewMode === 'ast' ? currentAstTree : currentTree;
       // Render SVG with all nodes initially hidden so we can animate them one by one
-      renderTreeSVG(currentTree, true, true);
+      renderTreeSVG(targetRoot, true, true);
 
       animPhase = 'tree';
       treeStepIndex = 0;
@@ -2004,11 +2662,19 @@ passo 1:
         const err = currentParseErrors[0];
         highlightLine(err.line);
         document.getElementById('syntactic-status').className = 'status-banner status-error';
-        document.getElementById('syntactic-status').innerHTML = `${UI_ICONS.alert}<span>ERRO SINTÁTICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
+        document.getElementById('syntactic-status').innerHTML = `${UI_ICONS.alert}<span>ERRO SINTÁTICO (E3): ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
+      } else if (currentSemanticErrors && currentSemanticErrors.length > 0) {
+        const err = currentSemanticErrors[0];
+        highlightLine(err.line);
+        document.getElementById('syntactic-status').className = 'status-banner status-error';
+        document.getElementById('syntactic-status').innerHTML = `${UI_ICONS.alert}<span>ERRO SEMÂNTICO (E4/E5): ${err.msg} na linha ${err.line}</span>`;
       } else {
         highlightLine(0);
+        const pCount = countTreeNodesTotal(currentTree);
+        const aCount = countTreeNodesTotal(currentAstTree);
+        const red = pCount > 0 ? (((pCount - aCount) / pCount) * 100).toFixed(1) : '0.0';
         document.getElementById('syntactic-status').className = 'status-banner status-success';
-        document.getElementById('syntactic-status').innerHTML = `${UI_ICONS.check}<span>Sintaxe válida! Árvore sintática construída com sucesso (${treeAnimSteps.length} nós).</span>`;
+        document.getElementById('syntactic-status').innerHTML = `${UI_ICONS.check}<span>Sintaxe e Semântica válidas! Parse Tree (${pCount} nós) &rarr; AST Anotada (${aCount} nós, -${red}%).</span>`;
       }
 
       isRunning = false;
@@ -2057,8 +2723,16 @@ passo 1:
       currentTree = parseResult.tree;
       currentParseErrors = parseResult.errors;
 
-      renderTreeSVG(currentTree, true, false);
+      const semResult = analyzeASTAndSemantics(currentTree);
+      currentAstTree = semResult.astRoot;
+      currentSemanticErrors = semResult.semanticErrors;
+      currentSymbolTable = semResult.symbolHistory;
+
+      const targetRoot = currentTreeViewMode === 'ast' ? currentAstTree : currentTree;
+      renderTreeSVG(targetRoot, true, false);
       renderTreeText(currentTree);
+      renderSymbolTableHTML();
+      updateReductionPill();
       finalizeTreeAnimation();
     }
 
@@ -2154,9 +2828,14 @@ passo 1:
           const parseResult = parse(currentTokens);
           currentTree = parseResult.tree;
           currentParseErrors = parseResult.errors;
+          const semResult = analyzeASTAndSemantics(currentTree);
+          currentAstTree = semResult.astRoot;
+          currentSemanticErrors = semResult.semanticErrors;
+          currentSymbolTable = semResult.symbolHistory;
         }
       }
-      if (!currentTree) return;
+      const activeTreeRoot = currentTreeViewMode === 'ast' ? currentAstTree : currentTree;
+      if (!activeTreeRoot) return;
 
       function clearCustomOffsets(n) {
         if (!n) return;
@@ -2170,10 +2849,11 @@ passo 1:
         (n.children || []).forEach(clearCustomOffsets);
       }
       clearCustomOffsets(currentTree);
+      clearCustomOffsets(currentAstTree);
 
       // If currently animating or paused in Phase 2 (tree construction), preserve animation step progress
       if (animPhase === 'tree' && (isRunning || isPaused)) {
-        renderTreeSVG(currentTree, true, true);
+        renderTreeSVG(activeTreeRoot, true, true);
         const upto = Math.min(treeStepIndex, treeAnimSteps.length);
         for (let i = 0; i < upto; i++) {
           const st = treeAnimSteps[i];
@@ -2185,7 +2865,7 @@ passo 1:
           activeTreeNodeEl.classList.add('node-active');
         }
       } else {
-        renderTreeSVG(currentTree, true, false);
+        renderTreeSVG(activeTreeRoot, true, false);
       }
 
       fitTreeToScreen();
@@ -2365,7 +3045,11 @@ passo 1:
           const tooltip = document.getElementById('tree-tooltip');
           if (tooltip) {
             tooltip.style.display = 'block';
-            if (node.isToken) {
+            if (node.isAstNode) {
+              const tipoBadge = node.tipo_inferido ? ` · Tipo: <code>${escapeHtml(node.tipo_inferido)}</code>` : '';
+              const coercaoBadge = node.coercao ? ` · Coerção: <code>${escapeHtml(node.coercao)}</code>` : '';
+              tooltip.innerHTML = `<span style="color:#34d399">Nó AST (${escapeHtml(node.astClass || 'AST')}):</span> <b>${escapeHtml(node.name)}</b>${tipoBadge}${coercaoBadge} (Linha ${node.line || '?'})`;
+            } else if (node.isToken) {
               tooltip.innerHTML = `<span style="color:var(--accent)">Token:</span> <b>${escapeHtml(node.name)}</b> · Lexema: <code>${escapeHtml(node.text)}</code> (Linha ${node.line || '?'})`;
             } else {
               const hint = node.children.length > 0 ? ' · <i>Duplo-clique p/ recolher/expandir</i>' : '';
@@ -2482,7 +3166,22 @@ passo 1:
     // TREE TEXT
     function renderTreeText(rootNode) {
       const container = document.getElementById('tree-text-container');
-      let output = '';
+      let output = '=== ARVORE SINTATICA ABSTRATA (AST ANOTADA - E4/E5) ===\n';
+
+      function printAstNode(node, indent = 0) {
+        if (!node) return;
+        const spaces = '  '.repeat(indent);
+        const tipo = node.tipo_inferido ? `  [tipo: ${node.tipo_inferido}]` : '';
+        const coercao = node.coercao ? `  (coercao: ${node.coercao})` : '';
+        output += `${spaces}${node.name}${tipo}${coercao}\n`;
+        (node.children || []).forEach(child => printAstNode(child, indent + 1));
+      }
+
+      if (currentAstTree) {
+        printAstNode(currentAstTree, 0);
+      }
+
+      output += '\n=== ARVORE DE PARSE COMPLETA (E3) ===\n';
 
       function printNode(node, indent = 0) {
         if (!node) return;
@@ -2501,13 +3200,38 @@ passo 1:
     }
 
     function toggleTreeMode(mode) {
-      if (mode === 'svg') {
-        document.getElementById('tree-svg-container').style.display = 'block';
-        document.getElementById('tree-text-container').style.display = 'none';
-      } else {
-        document.getElementById('tree-svg-container').style.display = 'none';
-        document.getElementById('tree-text-container').style.display = 'block';
+      currentTreeViewMode = mode;
+      const btnMap = {
+        svg: 'btn-mode-parse',
+        ast: 'btn-mode-ast',
+        symbols: 'btn-mode-symbols',
+        text: 'btn-mode-text'
+      };
+      Object.entries(btnMap).forEach(([k, id]) => {
+        const el = document.getElementById(id);
+        if (el) {
+          if (k === mode) el.classList.add('btn-primary');
+          else el.classList.remove('btn-primary');
+        }
+      });
+
+      const svgContainer = document.getElementById('tree-svg-container');
+      const symContainer = document.getElementById('tree-symbols-container');
+      const txtContainer = document.getElementById('tree-text-container');
+
+      svgContainer.style.display = (mode === 'svg' || mode === 'ast') ? 'block' : 'none';
+      symContainer.style.display = (mode === 'symbols') ? 'block' : 'none';
+      txtContainer.style.display = (mode === 'text') ? 'block' : 'none';
+
+      if (mode === 'svg' || mode === 'ast') {
+        const rootToRender = mode === 'ast' ? currentAstTree : currentTree;
+        if (rootToRender && !isRunning) {
+          renderTreeSVG(rootToRender, true, false);
+        }
+      } else if (mode === 'symbols') {
+        renderSymbolTableHTML();
       }
+      updateReductionPill();
     }
 
     function escapeHtml(str) {

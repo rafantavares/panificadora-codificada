@@ -1,0 +1,8 @@
+# Erro semantico: divisao por zero na expressao de quantidade
+receita "Divisao por zero";
+porcoes 4;
+
+ingrediente farinha 500 / 0 g;
+
+passo 1:
+  misture farinha;

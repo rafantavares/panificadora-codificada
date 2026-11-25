@@ -1,0 +1,10 @@
+# Erro semantico (Resumao G2): atribuicao de 'real' para 'inteiro' perde precisao
+receita "Teste de coercao invalida";
+porcoes 4;
+
+ingrediente farinha 500 g;
+lotes = 2;
+lotes = 2.5;
+
+passo 1:
+  misture farinha;

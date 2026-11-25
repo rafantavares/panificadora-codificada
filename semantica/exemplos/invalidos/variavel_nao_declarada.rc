@@ -1,0 +1,9 @@
+# Erro semantico (Aula 14, slide 3): variavel 'taxa' usada em expressao sem declarar
+receita "Pao caseiro";
+porcoes 4;
+
+ingrediente farinha 500 g;
+total = farinha + taxa;
+
+passo 1:
+  misture farinha;

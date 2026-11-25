@@ -8,15 +8,19 @@ Projeto desenvolvido para a disciplina de **Linguagens Formais e Computabilidade
 
 ## 📁 Estrutura do Repositório
 
-O projeto está organizado em dois módulos principais:
+O projeto está organizado em três módulos principais correspondentes às etapas do compilador:
 
-1. **[`lexica/`](lexica/):** 
+1. **[`lexica/`](lexica/):**
    - **Entrega 2 (E2):** Especificação da linguagem e Analisador Léxico.
    - Gramática léxica no ANTLR 4 (`Receita.g4`), analisador léxico (`src/lexico.py`), especificação completa (`docs/especificacao.md`), diário de decisões (`DIARIO.md`) e bateria de testes léxicos (`tests/test_exemplos.py`).
 
-2. **[`sintatica/`](sintatica/):** 
+2. **[`sintatica/`](sintatica/):**
    - **Entrega 3 (E3):** Analisador Sintático e Construção da Árvore Sintática (*Parse Tree*).
    - Gramática sintática livre de contexto (`gramatica/Receita.g4`), analisador sintático com árvore e recuperação de erros em modo pânico (`src/sintatico.py`), exemplos sintáticos válidos e inválidos, e suíte de testes automatizados (`tests/test_sintatico.py`).
+
+3. **[`semantica/`](semantica/):**
+   - **Entregas 4 e 5 (E4 / E5 Final):** Construção da Árvore Sintática Abstrata (AST), Pilha de Tabelas de Símbolos (Escopos) e Analisador Semântico com Inferência de Tipos e Coerção.
+   - Construtor de AST via `ReceitaVisitor` com redução de ~69% dos nós em relação à Árvore de Parse, controle de escopo global e por bloco de passo (`PilhaTabelas`), checagem de declarações duplicadas, variáveis/ingredientes não declarados, compatibilidade de tipos/unidades físicas e bateria de testes automatizados (`tests/test_semantico.py`).
 
 ---
 
@@ -38,6 +42,13 @@ python tests/test_sintatico.py
 python src/sintatico.py exemplos/validos/ola.rc --tree
 ```
 
+### Testando a Etapa Semântica e AST (E4 / E5):
+```sh
+cd semantica
+python tests/test_semantico.py
+python src/semantico.py exemplos/validos/bolo_cenoura.rc --ast --tabela
+```
+
 ---
 
 ## 🎨 Painel Visual & Simulador Interativo
@@ -49,4 +60,3 @@ O projeto conta com um **dashboard visual interativo** para apresentações e de
   - **Simulador com Animação:** Assista ao analisador léxico extraindo os tokens linha a linha e ao analisador sintático construindo a **Árvore Sintática (SVG)** ao vivo.
   - **Detecção Visual de Erros:** Simula erros léxicos e sintáticos, apontando com destaque a linha, coluna e motivo exato.
   - **Abas Completas:** Inclui a especificação formatada, comparativo das gramáticas ANTLR4 (.g4) e o diário de bordo.
-

@@ -1,0 +1,13 @@
+# Erro semantico (Aula 14, slide 21): variavel declarada no escopo local do passo 1
+# deixa de existir quando o escopo e desempilhado ao final do passo 1
+receita "Teste de escopo local";
+porcoes 4;
+
+ingrediente farinha 500 g;
+
+passo 1:
+  tempo_local = 15;
+  amasse por tempo_local min;
+
+passo 2:
+  asse por tempo_local min a 180 graus;
