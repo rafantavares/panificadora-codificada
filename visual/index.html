@@ -57,11 +57,16 @@
     }
 
     .brand-icon {
-      font-size: 2rem;
-      background: var(--card-bg);
-      padding: 0.4rem;
-      border-radius: 12px;
-      border: 1px solid var(--card-border);
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #fde68a 0%, #f59e0b 55%, #d97706 100%);
+      border-radius: 11px;
+      border: 1px solid rgba(254, 243, 199, 0.55);
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      flex-shrink: 0;
     }
 
     .brand-title {
@@ -113,7 +118,29 @@
       overflow-x: auto;
     }
 
+    .ui-icon {
+      width: 15px;
+      height: 15px;
+      display: inline-block;
+      vertical-align: middle;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .ui-icon-lg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2.2;
+    }
+
     .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
       background: none;
       border: none;
       color: var(--text-muted);
@@ -743,7 +770,15 @@
   <!-- HEADER -->
   <header>
     <div class="brand">
-      <div class="brand-icon">🥖</div>
+      <div class="brand-icon" aria-label="Logo Panificadora Codificada">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7.2 14.6C4.6 14 3.8 11.1 5.3 8.8C7 6.2 11.2 4.8 16 4.8C20.8 4.8 25 6.2 26.7 8.8C28.2 11.1 27.4 14 24.8 14.6V24.4C24.8 26 23.6 27.2 22 27.2H10C8.4 27.2 7.2 26 7.2 24.4V14.6Z" fill="#0f172a"/>
+          <path d="M10.2 8.9C11.9 7.9 13.9 7.4 16 7.4" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round" opacity="0.75"/>
+          <path d="M12.5 15.2L10 17.8L12.5 20.4" stroke="#fde68a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M17.1 14.3L14.9 21.3" stroke="#fde68a" stroke-width="2" stroke-linecap="round"/>
+          <path d="M19.5 15.2L22 17.8L19.5 20.4" stroke="#fde68a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <div>
         <div class="brand-title">Panificadora Codificada</div>
         <div class="brand-subtitle">DSL de Receitas Culinárias · Compiladores</div>
@@ -751,8 +786,8 @@
     </div>
 
     <div class="badges">
-      <div class="badge badge-green">✓ E2: Léxico OK</div>
-      <div class="badge badge-green">✓ E3: Sintático & Árvore OK</div>
+      <div class="badge badge-green"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> E2: Léxico OK</div>
+      <div class="badge badge-green"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> E3: Sintático &amp; Árvore OK</div>
       <div class="badge">ANTLR 4.13.2</div>
       <div class="badge">Python 3</div>
     </div>
@@ -760,11 +795,11 @@
 
   <!-- NAVIGATION TABS -->
   <nav>
-    <button class="tab-btn active" onclick="switchTab('simulador')">⚡ Simulador & Animação</button>
-    <button class="tab-btn" onclick="switchTab('especificacao')">📜 Especificação (docs)</button>
-    <button class="tab-btn" onclick="switchTab('gramatica')">📐 Gramática ANTLR4 (.g4)</button>
-    <button class="tab-btn" onclick="switchTab('exemplos')">🧪 Galeria de Testes</button>
-    <button class="tab-btn" onclick="switchTab('diario')">📝 Diário de Bordo</button>
+    <button class="tab-btn active" onclick="switchTab('simulador')"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Simulador &amp; Animação</button>
+    <button class="tab-btn" onclick="switchTab('especificacao')"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Especificação (docs)</button>
+    <button class="tab-btn" onclick="switchTab('gramatica')"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Gramática ANTLR4 (.g4)</button>
+    <button class="tab-btn" onclick="switchTab('exemplos')"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10 3v6l-4.5 9A2 2 0 0 0 7.3 21h9.4a2 2 0 0 0 1.8-3L14 9V3"/></svg> Galeria de Testes</button>
+    <button class="tab-btn" onclick="switchTab('diario')"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Diário de Bordo</button>
   </nav>
 
   <!-- MAIN AREA -->
@@ -777,28 +812,28 @@
         <!-- COL 1: CÓDIGO FONTE -->
         <div class="sim-card">
           <div class="card-header">
-            <div class="card-title">📝 Código Fonte (.rc)</div>
+            <div class="card-title"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Código Fonte (.rc)</div>
             <span id="line-count" class="badge">0 linhas</span>
           </div>
 
           <div style="padding: 0.6rem 0.8rem; background: #111827; border-bottom: 1px solid var(--card-border);">
             <select id="preset-selector" class="preset-select" onchange="loadPreset(this.value)">
-              <optgroup label="✅ Exemplos Válidos">
-                <option value="ola">🍞 Pão Simples (ola.rc)</option>
-                <option value="cenoura">🥕 Bolo de Cenoura (bolo_cenoura.rc)</option>
-                <option value="forma">🥖 Pão de Forma com Expressões (pao_forma.rc)</option>
+              <optgroup label="Exemplos Válidos">
+                <option value="ola">Pão Simples (ola.rc)</option>
+                <option value="cenoura">Bolo de Cenoura (bolo_cenoura.rc)</option>
+                <option value="forma">Pão de Forma com Expressões (pao_forma.rc)</option>
               </optgroup>
-              <optgroup label="❌ Erros Léxicos (E2)">
-                <option value="err_lex_char">⚠️ Caractere Inválido (@)</option>
-                <option value="err_lex_str">⚠️ Texto sem fechar ("aspas)</option>
-                <option value="err_lex_num">⚠️ Número malformado (500.)</option>
+              <optgroup label="Erros Léxicos (E2)">
+                <option value="err_lex_char">[Erro] Caractere Inválido (@)</option>
+                <option value="err_lex_str">[Erro] Texto sem fechar ("aspas)</option>
+                <option value="err_lex_num">[Erro] Número malformado (500.)</option>
               </optgroup>
-              <optgroup label="❌ Erros Sintáticos (E3)">
-                <option value="err_sin_pontovirg">⚠️ Falta ponto-e-vírgula (;)</option>
-                <option value="err_sin_passo">⚠️ Passo sem dois-pontos (passo 1)</option>
-                <option value="err_sin_paren">⚠️ Parênteses desbalanceados</option>
-                <option value="err_sin_fora">⚠️ Comando fora de passo</option>
-                <option value="err_sin_unidade">⚠️ Ingrediente sem unidade</option>
+              <optgroup label="Erros Sintáticos (E3)">
+                <option value="err_sin_pontovirg">[Erro] Falta ponto-e-vírgula (;)</option>
+                <option value="err_sin_passo">[Erro] Passo sem dois-pontos (passo 1)</option>
+                <option value="err_sin_paren">[Erro] Parênteses desbalanceados</option>
+                <option value="err_sin_fora">[Erro] Comando fora de passo</option>
+                <option value="err_sin_unidade">[Erro] Ingrediente sem unidade</option>
               </optgroup>
             </select>
           </div>
@@ -811,9 +846,9 @@
           </div>
 
           <div class="controls-bar">
-            <button id="btn-play" class="btn btn-primary" onclick="startAnimation()">▶ Animar</button>
-            <button id="btn-instant" class="btn" onclick="runInstant()">⚡ Instantâneo</button>
-            <button id="btn-reset" class="btn btn-danger" onclick="resetAnimation()">⏮ Reset</button>
+            <button id="btn-play" class="btn btn-primary" onclick="startAnimation()"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Animar</button>
+            <button id="btn-instant" class="btn" onclick="runInstant()"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Instantâneo</button>
+            <button id="btn-reset" class="btn btn-danger" onclick="resetAnimation()"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg> Reset</button>
             
             <div style="margin-left: auto; display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: #94a3b8;">
               <span>Velocidade:</span>
@@ -830,13 +865,13 @@
         <!-- COL 2: ESTEIRA DE TOKENS (LÉXICO) -->
         <div class="sim-card">
           <div class="card-header">
-            <div class="card-title">🔍 Esteira Léxica (Tokens)</div>
+            <div class="card-title"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Esteira Léxica (Tokens)</div>
             <span id="token-count" class="badge">0 tokens</span>
           </div>
           <div class="card-body" id="token-stream-container">
             <div id="token-stream" class="token-stream">
               <div style="color: #64748b; font-size: 0.85rem; text-align: center; margin-top: 3rem;">
-                Clique em <strong>▶ Animar</strong> para ver o analisador léxico processar os tokens em tempo real.
+                Clique em <strong>Animar</strong> para ver o analisador léxico processar os tokens em tempo real.
               </div>
             </div>
           </div>
@@ -848,24 +883,24 @@
         <!-- COL 3: ÁRVORE SINTÁTICA (SINTÁTICO) -->
         <div class="sim-card" id="tree-card">
           <div class="card-header">
-            <div class="card-title">🌳 Árvore Sintática (Parse Tree)</div>
+            <div class="card-title"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M12 7.5V12m0 0l-6 4.5M12 12l6 4.5"/></svg> Árvore Sintática (Parse Tree)</div>
             <div style="display: flex; gap: 0.35rem; align-items: center;">
               <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('svg')">Visual SVG</button>
               <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleTreeMode('text')">Texto Indentado</button>
-              <button id="btn-fullscreen-tree" class="btn btn-primary" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="toggleTreeFullscreen()">⛶ Tela Cheia</button>
+              <button id="btn-fullscreen-tree" class="btn btn-primary" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="toggleTreeFullscreen()"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Tela Cheia</button>
             </div>
           </div>
           <div class="card-body">
             <div id="tree-svg-container" class="tree-container">
               <svg id="parse-tree-svg" class="parse-tree"></svg>
-              <div class="tree-help-hint">🖱️ Arraste o fundo para mover · Scroll para Zoom · Arraste os nós · Duplo-clique num nó para recolher/expandir</div>
+              <div class="tree-help-hint">Arraste o fundo para mover · Scroll para Zoom · Arraste os nós · Duplo-clique num nó para recolher/expandir</div>
               <div id="tree-tooltip" class="tree-tooltip"></div>
               <div class="tree-floating-toolbar" onmousedown="event.stopPropagation()" ondblclick="event.stopPropagation()">
-                <button type="button" class="btn" title="Diminuir Zoom" onclick="zoomTree(0.8)">➖</button>
+                <button type="button" class="btn" title="Diminuir Zoom" onclick="zoomTree(0.8)"><svg class="ui-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
                 <span id="zoom-level" class="zoom-badge">100%</span>
-                <button type="button" class="btn" title="Aumentar Zoom" onclick="zoomTree(1.25)">➕</button>
-                <button type="button" class="btn" title="Ajustar árvore à tela" onclick="fitTreeToScreen()">🎯 Ajustar</button>
-                <button type="button" id="btn-reset-nodes" class="btn" title="Resetar posições dos nós e expandir subárvores" onclick="resetTreeNodes(event)">🔄 Resetar Nós</button>
+                <button type="button" class="btn" title="Aumentar Zoom" onclick="zoomTree(1.25)"><svg class="ui-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                <button type="button" class="btn" title="Ajustar árvore à tela" onclick="fitTreeToScreen()"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/></svg> Ajustar</button>
+                <button type="button" id="btn-reset-nodes" class="btn" title="Resetar posições dos nós e expandir subárvores" onclick="resetTreeNodes(event)"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Resetar Nós</button>
               </div>
             </div>
             <div id="tree-text-container" class="tree-container" style="display: none; padding: 1rem; font-family: var(--font-code); font-size: 0.82rem; color: #38bdf8; white-space: pre; overflow: auto; cursor: text;">
@@ -959,7 +994,7 @@ passo 2:                                      (8) fecha o passo 1 e abre o passo
         <div class="grammar-grid">
           <div class="sim-card">
             <div class="card-header">
-              <div class="card-title">🌳 E3: sintatica/gramatica/Receita.g4</div>
+              <div class="card-title"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M12 7.5V12m0 0l-6 4.5M12 12l6 4.5"/></svg> E3: sintatica/gramatica/Receita.g4</div>
               <span class="badge badge-green">Parser + Lexer</span>
             </div>
             <div class="card-body" style="padding: 1rem; background: #090e1a;">
@@ -1058,7 +1093,7 @@ ESPACO      : [ \t\r\n]+ -> skip ;</code></pre>
 
           <div class="sim-card">
             <div class="card-header">
-              <div class="card-title">🔍 E2: lexica/gramatica/Receita.g4</div>
+              <div class="card-title"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> E2: lexica/gramatica/Receita.g4</div>
               <span class="badge">Lexer-only + Stub</span>
             </div>
             <div class="card-body" style="padding: 1rem; background: #090e1a;">
@@ -1106,11 +1141,11 @@ ESPACO      : [ \t\r\n]+ -> skip ;</code></pre>
         <h2 style="margin-bottom: 0.5rem; color: #fff;">Galeria de Exemplos e Testes Automatizados</h2>
         <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Clique em <strong>"Carregar no Simulador"</strong> para ver qualquer caso sendo compilado e animado ao vivo.</p>
 
-        <h3 style="color: var(--success); margin: 1.5rem 0 1rem 0;">✅ Exemplos Válidos (Devem compilar 100%)</h3>
+        <h3 style="color: var(--success); margin: 1.5rem 0 1rem 0; display: flex; align-items: center; gap: 0.45rem;"><svg class="ui-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Exemplos Válidos (Devem compilar 100%)</h3>
         <div class="examples-grid">
           <div class="example-card card-valid">
             <div class="example-header">
-              <span class="example-title">🍞 ola.rc</span>
+              <span class="example-title">ola.rc</span>
               <span class="badge badge-green">Válido</span>
             </div>
             <div class="example-code">receita "Pao simples";
@@ -1121,12 +1156,12 @@ passo 1:
   misture farinha, agua;
 passo 2:
   asse por 40 min a 180 graus;</div>
-            <button class="btn btn-primary" onclick="loadPresetAndSimulate('ola')">▶ Carregar no Simulador</button>
+            <button class="btn btn-primary" onclick="loadPresetAndSimulate('ola')"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Carregar no Simulador</button>
           </div>
 
           <div class="example-card card-valid">
             <div class="example-header">
-              <span class="example-title">🥕 bolo_cenoura.rc</span>
+              <span class="example-title">bolo_cenoura.rc</span>
               <span class="badge badge-green">Válido</span>
             </div>
             <div class="example-code">receita "Bolo de cenoura";
@@ -1143,12 +1178,12 @@ passo 2:
   cozinhe em forma por 45 min a 180 graus;
 passo 3:
   sirva "com cobertura de chocolate";</div>
-            <button class="btn btn-primary" onclick="loadPresetAndSimulate('cenoura')">▶ Carregar no Simulador</button>
+            <button class="btn btn-primary" onclick="loadPresetAndSimulate('cenoura')"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Carregar no Simulador</button>
           </div>
 
           <div class="example-card card-valid">
             <div class="example-header">
-              <span class="example-title">🥖 pao_forma.rc</span>
+              <span class="example-title">pao_forma.rc</span>
               <span class="badge badge-green">Válido</span>
             </div>
             <div class="example-code">receita "Pao de forma";
@@ -1170,43 +1205,43 @@ passo 3:
 passo 4:
   asse por (30 + 10) min a 200 graus;
   sirva;</div>
-            <button class="btn btn-primary" onclick="loadPresetAndSimulate('forma')">▶ Carregar no Simulador</button>
+            <button class="btn btn-primary" onclick="loadPresetAndSimulate('forma')"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Carregar no Simulador</button>
           </div>
         </div>
 
-        <h3 style="color: var(--error); margin: 2rem 0 1rem 0;">❌ Exemplos Inválidos (Devem ser barrados com linha e coluna)</h3>
+        <h3 style="color: var(--error); margin: 2rem 0 1rem 0; display: flex; align-items: center; gap: 0.45rem;"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Exemplos Inválidos (Devem ser barrados com linha e coluna)</h3>
         <div class="examples-grid">
           <div class="example-card card-invalid">
             <div class="example-header">
-              <span class="example-title">⚠️ falta_pontovirgula.rc</span>
+              <span class="example-title">falta_pontovirgula.rc</span>
               <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Erro Sintático</span>
             </div>
             <div class="example-code">ingrediente farinha 500 g
 passo 1:</div>
             <p style="font-size: 0.8rem; color: #94a3b8;">Falta de <code>;</code> ao término da instrução do ingrediente.</p>
-            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_sin_pontovirg')">▶ Testar no Simulador</button>
+            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_sin_pontovirg')"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Testar no Simulador</button>
           </div>
 
           <div class="example-card card-invalid">
             <div class="example-header">
-              <span class="example-title">⚠️ caractere_invalido.rc</span>
+              <span class="example-title">caractere_invalido.rc</span>
               <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Erro Léxico</span>
             </div>
             <div class="example-code">passo 1:
   misture farinha @ agua;</div>
             <p style="font-size: 0.8rem; color: #94a3b8;">Símbolo <code>@</code> desconhecido pelo léxico da linguagem.</p>
-            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_lex_char')">▶ Testar no Simulador</button>
+            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_lex_char')"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Testar no Simulador</button>
           </div>
 
           <div class="example-card card-invalid">
             <div class="example-header">
-              <span class="example-title">⚠️ parenteses_desbalanceados.rc</span>
+              <span class="example-title">parenteses_desbalanceados.rc</span>
               <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Erro Sintático</span>
             </div>
             <div class="example-code">passo 1:
   asse por (30 + 10 min a 180 graus;</div>
             <p style="font-size: 0.8rem; color: #94a3b8;">Expressão com <code>(</code> sem o <code>)</code> de fechamento correspondente.</p>
-            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_sin_paren')">▶ Testar no Simulador</button>
+            <button class="btn btn-danger" onclick="loadPresetAndSimulate('err_sin_paren')"><svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Testar no Simulador</button>
           </div>
         </div>
       </div>
@@ -1388,7 +1423,7 @@ passo 1:
       }
     }
 
-    function loadPreset(key, runNow = true) {
+    function loadPreset(key, runNow = false) {
       if (PRESETS[key]) {
         editor.value = PRESETS[key];
         updateLineNumbers();
@@ -1782,6 +1817,16 @@ passo 1:
     let currentParseErrors = [];
     let currentTree = null;
 
+    const UI_ICONS = {
+      play: '<svg class="ui-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
+      pause: '<svg class="ui-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>',
+      check: '<svg class="ui-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',
+      alert: '<svg class="ui-icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+      reset: '<svg class="ui-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
+      expand: '<svg class="ui-icon" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>',
+      close: '<svg class="ui-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+    };
+
     function resetAnimation() {
       if (animationTimer) clearTimeout(animationTimer);
       isRunning = false;
@@ -1797,8 +1842,8 @@ passo 1:
       currentTree = null;
       draggedNode = null;
       isPanningTree = false;
-      document.getElementById('btn-play').innerText = '▶ Animar';
-      document.getElementById('token-stream').innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; margin-top: 3rem;">Clique em <strong>▶ Animar</strong> para iniciar.</div>';
+      document.getElementById('btn-play').innerHTML = `${UI_ICONS.play} Animar`;
+      document.getElementById('token-stream').innerHTML = '<div style="color: #64748b; font-size: 0.85rem; text-align: center; margin-top: 3rem;">Clique em <strong>Animar</strong> para iniciar.</div>';
       document.getElementById('token-count').innerText = '0 tokens';
       document.getElementById('lexical-status').className = 'status-banner';
       document.getElementById('lexical-status').innerHTML = '<span>Pronto para executar.</span>';
@@ -1815,7 +1860,7 @@ passo 1:
         clearTimeout(animationTimer);
         isRunning = false;
         isPaused = true;
-        document.getElementById('btn-play').innerText = '▶ Continuar';
+        document.getElementById('btn-play').innerHTML = `${UI_ICONS.play} Continuar`;
         return;
       }
 
@@ -1823,7 +1868,7 @@ passo 1:
       if (isPaused) {
         isPaused = false;
         isRunning = true;
-        document.getElementById('btn-play').innerText = '⏸ Pausar';
+        document.getElementById('btn-play').innerHTML = `${UI_ICONS.pause} Pausar`;
         if (animPhase === 'lex') {
           runNextTokenStep();
         } else if (animPhase === 'tree') {
@@ -1841,7 +1886,7 @@ passo 1:
 
       isRunning = true;
       animPhase = 'lex';
-      document.getElementById('btn-play').innerText = '⏸ Pausar';
+      document.getElementById('btn-play').innerHTML = `${UI_ICONS.pause} Pausar`;
       document.getElementById('token-stream').innerHTML = '';
       document.getElementById('lexical-status').className = 'status-banner';
       document.getElementById('lexical-status').innerHTML = '<span>Fase 1/2: Analisando tokens...</span>';
@@ -1878,10 +1923,10 @@ passo 1:
         if (tok.type === 'ERROR') {
           isRunning = false;
           animPhase = 'idle';
-          document.getElementById('btn-play').innerText = '▶ Animar';
+          document.getElementById('btn-play').innerHTML = `${UI_ICONS.play} Animar`;
           const err = currentErrors[0];
           document.getElementById('lexical-status').className = 'status-banner status-error';
-          document.getElementById('lexical-status').innerHTML = `<span>⚠️ ERRO LÉXICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
+          document.getElementById('lexical-status').innerHTML = `${UI_ICONS.alert}<span>ERRO LÉXICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
           document.getElementById('syntactic-status').className = 'status-banner status-error';
           document.getElementById('syntactic-status').innerHTML = `<span>Compilação interrompida pelo analisador léxico.</span>`;
           return;
@@ -1896,7 +1941,7 @@ passo 1:
 
     function startTreeAnimationPhase() {
       document.getElementById('lexical-status').className = 'status-banner status-success';
-      document.getElementById('lexical-status').innerHTML = `<span>✓ Léxico concluído: ${currentTokens.length} tokens válidos reconhecidos!</span>`;
+      document.getElementById('lexical-status').innerHTML = `${UI_ICONS.check}<span>Léxico concluído: ${currentTokens.length} tokens válidos reconhecidos!</span>`;
 
       const parseResult = parse(currentTokens);
       currentTree = parseResult.tree;
@@ -1959,17 +2004,17 @@ passo 1:
         const err = currentParseErrors[0];
         highlightLine(err.line);
         document.getElementById('syntactic-status').className = 'status-banner status-error';
-        document.getElementById('syntactic-status').innerHTML = `<span>⚠️ ERRO SINTÁTICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
+        document.getElementById('syntactic-status').innerHTML = `${UI_ICONS.alert}<span>ERRO SINTÁTICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
       } else {
         highlightLine(0);
         document.getElementById('syntactic-status').className = 'status-banner status-success';
-        document.getElementById('syntactic-status').innerHTML = `<span>✓ Sintaxe válida! Árvore sintática construída com sucesso (${treeAnimSteps.length} nós).</span>`;
+        document.getElementById('syntactic-status').innerHTML = `${UI_ICONS.check}<span>Sintaxe válida! Árvore sintática construída com sucesso (${treeAnimSteps.length} nós).</span>`;
       }
 
       isRunning = false;
       isPaused = false;
       animPhase = 'idle';
-      document.getElementById('btn-play').innerText = '▶ Animar';
+      document.getElementById('btn-play').innerHTML = `${UI_ICONS.play} Animar`;
     }
 
     function runInstant() {
@@ -1999,14 +2044,14 @@ passo 1:
         const err = currentErrors[0];
         highlightLine(err.line);
         document.getElementById('lexical-status').className = 'status-banner status-error';
-        document.getElementById('lexical-status').innerHTML = `<span>⚠️ ERRO LÉXICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
+        document.getElementById('lexical-status').innerHTML = `${UI_ICONS.alert}<span>ERRO LÉXICO: ${err.msg} na linha ${err.line}, coluna ${err.col}</span>`;
         document.getElementById('syntactic-status').className = 'status-banner status-error';
         document.getElementById('syntactic-status').innerHTML = `<span>Compilação interrompida na fase léxica.</span>`;
         return;
       }
 
       document.getElementById('lexical-status').className = 'status-banner status-success';
-      document.getElementById('lexical-status').innerHTML = `<span>✓ Léxico concluído: ${currentTokens.length} tokens válidos reconhecidos!</span>`;
+      document.getElementById('lexical-status').innerHTML = `${UI_ICONS.check}<span>Léxico concluído: ${currentTokens.length} tokens válidos reconhecidos!</span>`;
 
       const parseResult = parse(currentTokens);
       currentTree = parseResult.tree;
@@ -2148,9 +2193,9 @@ passo 1:
       const btn = document.getElementById('btn-reset-nodes');
       if (btn) {
         if (resetBtnFeedbackTimer) clearTimeout(resetBtnFeedbackTimer);
-        btn.innerText = '✓ Nós Resetados';
+        btn.innerHTML = `${UI_ICONS.check} Nós Resetados`;
         resetBtnFeedbackTimer = setTimeout(() => {
-          btn.innerText = '🔄 Resetar Nós';
+          btn.innerHTML = `${UI_ICONS.reset} Resetar Nós`;
         }, 900);
       }
     }
@@ -2159,7 +2204,7 @@ passo 1:
       const card = document.getElementById('tree-card');
       const btn = document.getElementById('btn-fullscreen-tree');
       const isFull = card.classList.toggle('fullscreen-card');
-      btn.innerText = isFull ? '✕ Sair da Tela Cheia (ESC)' : '⛶ Tela Cheia';
+      btn.innerHTML = isFull ? `${UI_ICONS.close} Sair da Tela Cheia (ESC)` : `${UI_ICONS.expand} Tela Cheia`;
       requestAnimationFrame(() => fitTreeToScreen());
     }
 
@@ -2469,11 +2514,10 @@ passo 1:
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // Initialize with default preset
+    // Initialize with default preset (pronto para animar)
     window.onload = function() {
       initTreeCanvasInteractions();
-      loadPreset('ola');
-      runInstant();
+      loadPreset('ola', false);
     };
   </script>
 </body>
